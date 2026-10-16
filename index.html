@@ -157,8 +157,8 @@ textarea{font-size:13px;font-family:ui-monospace,Menlo,monospace;text-align:left
 .vrow{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 0;border-top:.5px solid var(--line)}
 .vrow b{font-weight:600}.vrow span.ok{color:#30D158;font-size:13px;font-weight:600}.vrow span.no{color:var(--fg3);font-size:13px}
 .vrow label{display:inline-block;border-radius:99px;padding:9px 16px;background:var(--glass2);color:var(--fg);font:600 13px var(--font)}
-#splash{position:fixed;inset:0;z-index:300;background:radial-gradient(120% 70% at 10% 92%,rgba(75,12,16,.95),rgba(5,5,6,0) 70%),#050506;display:flex;align-items:center;justify-content:center;padding-bottom:8vh;transition:opacity .55s ease,visibility .55s}
-#splash img{width:30vw;max-width:170px;aspect-ratio:1;border-radius:22.4%;box-shadow:0 18px 50px rgba(0,0,0,.6);animation:spl 1s ease-out both}
+#splash{position:fixed;inset:0;z-index:300;background:radial-gradient(120% 70% at 10% 92%,rgba(75,12,16,.95),rgba(5,5,6,0) 70%),#050506;display:flex;align-items:center;justify-content:center;padding-bottom:8vh;transition:opacity .8s ease,visibility .8s}
+#splash img{width:30vw;max-width:170px;aspect-ratio:1;border-radius:22.4%;box-shadow:0 18px 50px rgba(0,0,0,.6);animation:spl 1.4s cubic-bezier(.2,.8,.2,1) both}
 #splash.hide{opacity:0;visibility:hidden}
 @keyframes spl{from{transform:scale(.86);opacity:0}to{transform:scale(1);opacity:1}}
 </style>
@@ -693,7 +693,7 @@ document.addEventListener("change",function(ev){
 
 render();
 vinit();
-setTimeout(function(){var sp=document.getElementById("splash");if(sp){sp.classList.add("hide");setTimeout(function(){sp.remove();},700);}},1000);
+setTimeout(function(){var sp=document.getElementById("splash");if(sp){sp.classList.add("hide");setTimeout(function(){sp.remove();},900);}},2200);
 
 /* ---------- Sync con il database (solo nella versione su claude.ai) ---------- */
 function initDb(){
