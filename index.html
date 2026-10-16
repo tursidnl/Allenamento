@@ -165,6 +165,9 @@ textarea{font-size:13px;font-family:ui-monospace,Menlo,monospace;text-align:left
 .coach .clab{font-size:10.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--tint)}
 .coach p{margin:6px 0 0;font-size:14px;line-height:1.5;color:var(--fg2)}
 .coach p.cnext{color:var(--fg);font-weight:500}
+.cchat{margin-top:12px;padding-top:12px;border-top:.5px solid var(--line)}
+.cq{font-weight:600;color:var(--fg)!important}
+.copt{display:block;width:100%;text-align:left;border:0;border-radius:12px;background:var(--glass2);color:var(--fg);font:500 14px var(--font);padding:12px 14px;margin:8px 0 0}
 </style>
 </head>
 <body>
@@ -358,7 +361,7 @@ function withLoad(e,n){var m=String(e.load||"").match(/^[^\d-]*-?\d+(?:[.,]\d+)?
 function coachAdvice(e){
   var N=e.sets,T=repsSum(e.reps),L=num(e.load),H=hist(e.id),u=e.unit?" "+e.unit:"",out={lines:[],suggest:null};
   if(!(T>0))return out;
-  if(!H.length){out.lines.push("Prima seduta su questo esercizio: parti da "+e.load+u+" e fermati con 2 ripetizioni di scorta. Il numero da battere è "+N+"×"+e.reps+".");return out;}
+  if(!H.length){out.lines.push("Prima seduta su questo esercizio: parti da "+e.load+u+" e fermati quando senti di poterne fare ancora 2 (due ripetizioni di scorta). Il numero da battere è "+N+"×"+e.reps+".");return out;}
   var last=H[0],lu=maxLoad(last.sets),ok=cleared(last.sets,N,T),prev=H[1],miss=0;
   last.sets.forEach(function(s){miss+=Math.max(0,T-repsSum(s.reps));});miss+=Math.max(0,N-last.sets.length)*T;
   var when=fmtDate(last.date);
@@ -377,7 +380,7 @@ function coachAdvice(e){
     }else{
       out.lines.push("Il "+when+" con "+fmtN(lu)+u+" ti mancavano "+miss+" ripetizioni in totale. Tieni il carico: l'obiettivo è "+N+"×"+e.reps+" su tutte le serie, rispettando i recuperi.");
     }
-    if(!isNaN(L)&&L>lu+0.001&&!ok&&!stall)out.lines.unshift("Hai alzato il carico a "+e.load+u+": ripeti "+N+"×"+e.reps+" e nelle prime serie lascia 2 ripetizioni di scorta.");
+    if(!isNaN(L)&&L>lu+0.001&&!ok&&!stall)out.lines.unshift("Hai alzato il carico a "+e.load+u+": ripeti "+N+"×"+e.reps+" e nelle prime serie fermati quando senti di poterne fare ancora 2 (due ripetizioni di scorta).");
   }
   if(H.length>=2){
     var a=e1rm(H[H.length-1].sets),b=e1rm(last.sets);
@@ -388,13 +391,62 @@ function coachAdvice(e){
   }
   return out;
 }
+/* ---------- Coach in dialogo: ti fa domande e risponde in base a risposte + storico ---------- */
+var FB=lsGet("dt.fb")||{};
+function saveFb(){lsSet("dt.fb",FB);}
+var CHAT=null;
+var RIRQ=[["easy","Facile: ne avrei fatte almeno 4 in più"],["good","Giusta: ne avrei fatte 2 o 3 in più"],["hard","Dura: ne avrei fatta 1 in più"],["fail","Al limite, o non ho chiuso le ripetizioni"]];
+var FEELQ=[["ok","Tutto bene"],["pain","Fastidio o dolore articolare"],["tired","Molto stanco, recupero scarso"]];
+function chatAdvice(e,rir,feel){
+  var st=stepFor(e),L=num(e.load),u=e.unit?" "+e.unit:"",lines=[],sug=null,past=(FB[e.id]||[]).slice(0,2);
+  var base=coachAdvice(e);
+  function lower(k){return (!isNaN(L)&&L-k>0)?withLoad(e,L-k):null;}
+  if(feel==="pain"){
+    lines.push("Il dolore articolare non si supera con la forza di volontà. Oggi scendi di carico e lavora in un range dove non senti fastidio, controllando la tecnica. Se resta nelle prossime sedute, fatti vedere da un fisioterapista o dal medico.");
+    sug=lower(st*2);
+  }else if(rir==="easy"){
+    var prevEasy=past.length===2&&past.every(function(x){return x.rir==="easy";});
+    lines.push(prevEasy?"Sono tre volte di fila che ti sembra facile: il carico è chiaramente basso. Fai un salto doppio.":"Con 4 o più ripetizioni di scorta il muscolo non riceve abbastanza stimolo: il carico è troppo leggero.");
+    if(!isNaN(L)){sug=withLoad(e,L+(prevEasy?st*2:st));}
+  }else if(rir==="good"){
+    lines.push("Perfetto: 2 o 3 ripetizioni di scorta sono la zona migliore per crescere. Tieni questo carico e sali solo quando chiudi tutte le serie.");
+  }else if(rir==="hard"){
+    lines.push("Serie dura ma pulita, con 1 ripetizione di scorta: va benissimo come ultima serie. Se ti succede già dalla prima, il carico è un po' alto: scendi di "+fmtN(st)+u+".");
+  }else{
+    var prevFail=past.length&&past[0].rir==="fail";
+    lines.push(prevFail?"Due volte di fila al limite o con ripetizioni mancate: scendi di carico per una seduta e risali piano.":"Hai toccato il limite: tieni lo stesso carico per le serie dopo, ma allunga il recupero di 30 secondi. Se succede di nuovo la prossima volta, scendi.");
+    if(prevFail)sug=lower(st);
+  }
+  if(feel==="tired"){lines.push("Recupero scarso: punta a 7-8 ore di sonno e mangia abbastanza carboidrati e proteine. Se dura più di una settimana, fai una seduta di scarico: −10% sul carico e una serie in meno.");}
+  if(base.lines[0])lines.push("Dai tuoi dati: "+base.lines[0]);
+  return{lines:lines,suggest:sug};
+}
+function chatHtml(e){
+  if(e.group==="Cardio"||e.group==="Addome")return "";
+  if(!CHAT||CHAT.id!==e.id)return '<button class="btn small sec" style="margin:12px 0 0" data-act="cstart" data-id="'+e.id+'">Chiedi al coach</button>';
+  var h='<div class="cchat">';
+  if(CHAT.step===1){
+    h+='<p class="cq">Com\'è andata l\'ultima serie? Quante ripetizioni avresti ancora fatto?</p>';
+    RIRQ.forEach(function(o){h+='<button class="copt" data-act="cans" data-id="'+e.id+'" data-q="rir" data-v="'+o[0]+'">'+esc(o[1])+'</button>';});
+  }else if(CHAT.step===2){
+    h+='<p class="cq">Come ti senti?</p>';
+    FEELQ.forEach(function(o){h+='<button class="copt" data-act="cans" data-id="'+e.id+'" data-q="feel" data-v="'+o[0]+'">'+esc(o[1])+'</button>';});
+  }else{
+    var r=chatAdvice(e,CHAT.rir,CHAT.feel);
+    h+='<div class="clab" style="margin-top:2px">Il mio consiglio</div>';
+    r.lines.forEach(function(t){h+='<p class="cnext">'+esc(t)+'</p>';});
+    if(r.suggest)h+='<button class="btn small" style="margin:10px 8px 0 0" data-act="coachuse" data-id="'+e.id+'" data-v="'+esc(r.suggest)+'">Usa '+esc(r.suggest)+esc(e.unit?" "+e.unit:"")+'</button>';
+    h+='<button class="btn small sec" style="margin:10px 0 0" data-act="cend" data-id="'+e.id+'">Chiudi</button>';
+  }
+  return h+'</div>';
+}
 function coachHtml(e){
   if(e.group==="Cardio"||e.group==="Addome")return "";
   var tip=TIPS[e.id]||GTIPS[e.group]||"",c=coachAdvice(e),h='<div class="coach"><div class="clab">Coach</div>';
   if(tip)h+='<p class="ctip">'+esc(tip)+'</p>';
   if(c.lines.length){h+='<div class="clab" style="margin-top:12px">Prossima seduta</div>';c.lines.forEach(function(t){h+='<p class="cnext">'+esc(t)+'</p>';});}
   if(c.suggest)h+='<button class="btn small" style="margin:10px 0 0" data-act="coachuse" data-id="'+e.id+'" data-v="'+esc(c.suggest)+'">Usa '+esc(c.suggest)+esc(e.unit?" "+e.unit:"")+'</button>';
-  return h+'</div>';
+  return h+chatHtml(e)+'</div>';
 }
 
 /* ---------- Icone ---------- */
@@ -693,7 +745,7 @@ document.addEventListener("click",function(ev){
   unlockAudio();
   if(a==="testsound"){beep();return;}
   if(a==="backup"){
-    var txt=JSON.stringify({v:1,plan:S.plan,logs:S.logs});
+    var txt=JSON.stringify({v:1,plan:S.plan,logs:S.logs,fb:FB});
     var done=function(){toast("Backup copiato");};
     var fail=function(){var t=document.getElementById("restoreBox");if(t){t.value=txt;t.focus();t.select();}toast("Copia il testo nel riquadro");};
     try{if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(txt).then(done,fail);}else fail();}catch(e){fail();}
@@ -703,11 +755,14 @@ document.addEventListener("click",function(ev){
     var box=document.getElementById("restoreBox"),o=null;
     try{o=JSON.parse(box.value);}catch(e){}
     if(!o||!o.plan||!o.plan.length||!Array.isArray(o.logs)){toast("Backup non valido");return;}
-    S.plan=migrate(o.plan);S.logs=o.logs;sortLogs();lsSet("dt.plan",S.plan);saveLogLocal();toast("Dati ripristinati");render();return;
+    S.plan=migrate(o.plan);S.logs=o.logs;if(o.fb){FB=o.fb;saveFb();}sortLogs();lsSet("dt.plan",S.plan);saveLogLocal();toast("Dati ripristinati");render();return;
   }
   if(a!=="del"&&a!=="reset"&&a!=="dellog")S.pend=null;
   if(a==="tab"){S.tab=b.dataset.v;S.pend=null;render();window.scrollTo(0,0);}
   else if(a==="day"){S.day=+b.dataset.v;S.open=null;if(S.tab==="progressi")S.tab="oggi";render();window.scrollTo(0,0);}
+  else if(a==="cstart"){CHAT={id:id,step:1};render();}
+  else if(a==="cans"){var cq=b.dataset.q,cv=b.dataset.v;if(CHAT&&CHAT.id===id){if(cq==="rir"){CHAT.rir=cv;CHAT.step=2;}else{CHAT.feel=cv;CHAT.step=3;(FB[id]=FB[id]||[]).unshift({date:new Date().toISOString(),rir:CHAT.rir,feel:cv});FB[id]=FB[id].slice(0,20);saveFb();}}render();}
+  else if(a==="cend"){CHAT=null;render();}
   else if(a==="coachuse"){var ce2=findEx(id);if(ce2){ce2.load=b.dataset.v;var dr2=S.draft[d.id];if(dr2&&dr2.sets[ce2.id])dr2.sets[ce2.id].forEach(function(s){if(!s.done)s.load=ce2.load;});savePlan();saveDraft();toast("Carico aggiornato");render();}}
   else if(a==="abs-play"){plOpen();}
   else if(a==="p-close"){plClose();}
