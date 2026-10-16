@@ -280,6 +280,8 @@ function viewOggi(){
         h+='<div class="detail">';
         if(e.tag)h+='<span class="tag">'+esc(e.tag)+'</span>';
         if(e.note)h+='<p class="hint">'+esc(e.note)+'</p>';
+        if(e.group==="Cardio"){var cm=num(e.reps),run=S.timer&&S.timer.cardio&&S.timer.name===e.name;
+          if(cm>0)h+='<button class="btn" style="margin:14px 0 4px" data-act="cardio" data-id="'+e.id+'">'+(run?'Ferma timer':'▶ Avvia timer · '+cm+' min')+'</button>';}
         var l=lastFor(e.id);
         if(l)h+='<p class="hint"><b>Ultima volta</b> · '+fmtDate(l.date)+' · '+esc(lastText(l))+'</p>';
         h+='<div class="sets"><div class="h"></div><div class="h">Rip.</div><div class="h">Carico</div><div class="h"></div>';
@@ -401,9 +403,9 @@ function render(){
 
 /* ---------- Timer di recupero ---------- */
 var tiv=null;
-function startTimer(sec,name){
+function startTimer(sec,name,cardio){
   keepAwake();
-  S.timer={end:Date.now()+sec*1000,total:sec*1000,name:name,fired:false};
+  S.timer={end:Date.now()+sec*1000,total:sec*1000,name:name,fired:false,cardio:!!cardio};
   clearInterval(tiv);tiv=setInterval(tick,250);drawTimer();
 }
 function stopTimer(){S.timer=null;clearInterval(tiv);document.getElementById("timerhost").innerHTML="";}
@@ -412,7 +414,7 @@ function drawTimer(){
   var t=S.timer,host=document.getElementById("timerhost");
   if(!t){host.innerHTML="";return;}
   var left=Math.max(0,Math.ceil((t.end-Date.now())/1000)),go=left===0;
-  host.innerHTML='<div class="timer'+(go?" go":"")+'"><div class="row"><div class="t" id="tt">'+(go?"Via":fmtClock(left))+'</div><div class="l">'+esc(t.name)+'</div><button data-act="t-">−15</button><button data-act="t+">+15</button><button data-act="tx" aria-label="Chiudi timer">✕</button></div><div class="bar"><i id="tbar" style="width:'+Math.max(0,Math.min(100,(t.end-Date.now())/t.total*100))+'%"></i></div></div>';
+  host.innerHTML='<div class="timer'+(go?" go":"")+'"><div class="row"><div class="t" id="tt">'+(go?(t.cardio?"Finito":"Via"):fmtClock(left))+'</div><div class="l">'+esc(t.name)+'</div><button data-act="t-">−15</button><button data-act="t+">+15</button><button data-act="tx" aria-label="Chiudi timer">✕</button></div><div class="bar"><i id="tbar" style="width:'+Math.max(0,Math.min(100,(t.end-Date.now())/t.total*100))+'%"></i></div></div>';
 }
 /* Suono di fine recupero: sbloccato al primo tocco (richiesto da iPhone), suona anche con le cuffie. */
 var AC=null,chimeEl=null,wake=null;
@@ -526,6 +528,7 @@ document.addEventListener("click",function(ev){
   if(a!=="del"&&a!=="reset"&&a!=="dellog")S.pend=null;
   if(a==="tab"){S.tab=b.dataset.v;S.pend=null;render();window.scrollTo(0,0);}
   else if(a==="day"){S.day=+b.dataset.v;S.open=null;if(S.tab==="progressi")S.tab="oggi";render();window.scrollTo(0,0);}
+  else if(a==="cardio"){var ce=findEx(id),cmin=num(ce.reps);if(S.timer&&S.timer.cardio&&S.timer.name===ce.name)stopTimer();else if(cmin>0)startTimer(Math.round(cmin*60),ce.name,true);render();}
   else if(a==="grp"){S.gc[b.dataset.v]=!S.gc[b.dataset.v];render();}
   else if(a==="open"){S.open=S.open===id?null:id;render();}
   else if(a==="chk"){
