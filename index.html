@@ -242,7 +242,7 @@ function ring(done,total,tint){
 }
 
 /* ---------- Viste ---------- */
-function chips(){return '<div class="chips">'+S.plan.map(function(d,i){return '<button class="chip'+(i===S.day?" on":"")+'" data-act="day" data-v="'+i+'">'+esc(d.name)+'</button>';}).join("")+'</div>';}
+function chips(){return '<div class="chips" style="margin:6px 0 4px">'+[["oggi","Allenamento"],["scheda","Scheda"],["progressi","Progressi"]].map(function(x){return '<button class="chip'+(S.tab===x[0]?" on":"")+'" data-act="tab" data-v="'+x[0]+'">'+x[1]+'</button>';}).join("")+'</div>';}
 function statusDot(){return '';var _x='<span class="stat-dot'+(S.syncOn?"":" off")+'"><i></i>'+(S.syncOn?"Sincronizzato":"Su questo dispositivo")+'</span>';}
 function estMinutes(d){var s=0;d.exercises.forEach(function(e){s+=e.sets*(e.rest+40);});return Math.round(s/60/5)*5;}
 
@@ -256,7 +256,6 @@ function viewOggi(){
   var h='<h1 style="margin-top:22px">'+esc(d.name)+'</h1>';
   h+='<div class="eyebrow" style="margin:6px 0 44px"><span>'+new Date().toLocaleDateString("it-IT",{weekday:"long",day:"numeric",month:"long"})+'</span>'+statusDot()+'</div>';
   h+='<div class="facts"><span>'+d.exercises.length+' esercizi</span><i></i><span>'+nsets+' serie</span><i></i><span>circa '+estMinutes(d)+' min</span></div>';
-  h+=chips();
   d.groups.forEach(function(g){
     var exs=d.exercises.filter(function(e){return e.group===g.name;}),total=exs.length;
     if(!exs.length)return;
@@ -290,7 +289,7 @@ function viewOggi(){
 
 function viewScheda(){
   var d=curDay();
-  var h='<div class="eyebrow"><span>Modifica</span>'+statusDot()+'</div><h1>Scheda</h1><p class="sub">Serie, ripetizioni, carichi e recuperi. I cambi valgono dalla prossima sessione.</p><div style="height:20px"></div>'+chips();
+  var h='<div class="eyebrow"><span>Modifica</span>'+statusDot()+'</div><h1>Scheda</h1><p class="sub">Serie, ripetizioni, carichi e recuperi. I cambi valgono dalla prossima sessione.</p><div style="height:20px"></div>'+'';
   d.groups.forEach(function(g){
     var exs=d.exercises.filter(function(e){return e.group===g.name;}),total=exs.length;
     h+=glabel(d,g,total)+'<div class="stack">';
@@ -382,8 +381,8 @@ function render(){
   var bgImg=S.tab==="progressi"?"bg-n.jpg":"bg-d"+((S.day%3)+1)+".jpg";
   var bgEl=document.getElementById("bg");if(bgEl&&bgEl.dataset.i!==bgImg){bgEl.dataset.i=bgImg;bgEl.style.backgroundImage="url("+bgImg+")";}
   var app=document.getElementById("app");
-  app.innerHTML=S.tab==="oggi"?viewOggi():S.tab==="scheda"?viewScheda():viewProgressi();
-  document.getElementById("tabs").innerHTML=[["oggi","Allenamento"],["scheda","Scheda"],["progressi","Progressi"]].map(function(x){return '<button data-act="tab" data-v="'+x[0]+'" class="'+(S.tab===x[0]?"on":"")+'" aria-label="'+x[1]+'">'+IC[x[0]]+'<span>'+x[1]+'</span></button>';}).join("");
+  app.innerHTML=chips()+(S.tab==="oggi"?viewOggi():S.tab==="scheda"?viewScheda():viewProgressi());
+  document.getElementById("tabs").innerHTML=S.plan.map(function(d,i){var on=S.tab!=="progressi"&&S.day===i;return '<button data-act="day" data-v="'+i+'" class="'+(on?"on":"")+'" aria-label="'+esc(d.name)+'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9.5"/><text x="12" y="16.6" text-anchor="middle" font-size="12.5" font-weight="800" fill="currentColor" stroke="none" font-family="-apple-system,Helvetica,Arial,sans-serif">'+(i+1)+'</text></svg><span>'+esc(d.name)+'</span></button>';}).join("");
   document.getElementById("ctahost").innerHTML=(S.tab==="oggi"&&anyDone(curDay()))?'<div class="cta"><button data-act="finish">Termina e salva</button></div>':"";
   window.scrollTo(0,y);
 }
@@ -514,7 +513,7 @@ document.addEventListener("click",function(ev){
   }
   if(a!=="del"&&a!=="reset"&&a!=="dellog")S.pend=null;
   if(a==="tab"){S.tab=b.dataset.v;S.pend=null;render();window.scrollTo(0,0);}
-  else if(a==="day"){S.day=+b.dataset.v;S.open=null;render();}
+  else if(a==="day"){S.day=+b.dataset.v;S.open=null;if(S.tab==="progressi")S.tab="oggi";render();window.scrollTo(0,0);}
   else if(a==="grp"){S.gc[b.dataset.v]=!S.gc[b.dataset.v];render();}
   else if(a==="open"){S.open=S.open===id?null:id;render();}
   else if(a==="chk"){
