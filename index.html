@@ -161,6 +161,10 @@ textarea{font-size:13px;font-family:ui-monospace,Menlo,monospace;text-align:left
 #splash img{width:30vw;max-width:170px;aspect-ratio:1;border-radius:22.4%;box-shadow:0 18px 50px rgba(0,0,0,.6);animation:spl 1.4s cubic-bezier(.2,.8,.2,1) both}
 #splash.hide{opacity:0;visibility:hidden}
 @keyframes spl{from{transform:scale(.86);opacity:0}to{transform:scale(1);opacity:1}}
+.coach{margin:14px 0 4px;padding:14px 16px;border-radius:16px;background:rgba(255,255,255,.05);border:.5px solid var(--line)}
+.coach .clab{font-size:10.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--tint)}
+.coach p{margin:6px 0 0;font-size:14px;line-height:1.5;color:var(--fg2)}
+.coach p.cnext{color:var(--fg);font-weight:500}
 </style>
 </head>
 <body>
@@ -318,6 +322,81 @@ function plOpen(){
 function plToggle(){var v=document.getElementById("pv"),pp=document.getElementById("ppp");if(!v)return;if(v.paused){v.play();if(pp)pp.textContent="⏸";}else{v.pause();if(pp)pp.textContent="▶";}}
 function plClose(){var h=document.getElementById("player");if(h){var v=document.getElementById("pv");try{v.pause();v.removeAttribute("src");v.load();}catch(e){}h.remove();}if(PL.url){URL.revokeObjectURL(PL.url);PL.url=null;}}
 
+/* ---------- Coach: consigli fissi + consiglio che si adatta ai tuoi dati ---------- */
+var TIPS={
+ e1:"Piedi a metà piattaforma, larghi come le spalle. Scendi fino a circa 90° di ginocchio senza staccare il bacino dallo schienale e spingi con tutto il piede, senza bloccare le ginocchia in alto. Scendi in 2-3 secondi e non rimbalzare: la massa nasce dalla tensione, non dal carico buttato.",
+ e2:"Ginocchia quasi tese ma non bloccate, schiena neutra, bacino indietro come per chiudere un cassetto. Scendi finché senti i femorali tirare e risali spingendo i fianchi in avanti. Non scendere oltre il punto in cui la schiena si arrotonda: qui conta l'allungamento.",
+ e3:"Regola lo schienale in modo che il ginocchio sia in asse con la leva. Sali con forza, fermati 1 secondo in alto stringendo il quadricipite e scendi in 2-3 secondi. Niente slancio: se ti aiuti col bacino il carico è troppo.",
+ e4:"Bacino fermo e appoggiato. Contrai forte in fondo e risali lentamente. Nell'ultima serie con rest pause: fai le 10 ripetizioni, respira per 10-15 secondi e aggiungi le altre 5 senza cambiare tecnica.",
+ e5:"Schiena appoggiata e addome attivo. Porta il bilanciere dalla clavicola sopra la testa con i gomiti leggermente avanti, senza inarcare la schiena. Con poche ripetizioni (6) il carico è il motore: sali appena chiudi tutte le serie.",
+ e6:"Gomiti leggermente flessi e porta i gomiti verso l'esterno, non le mani. Arriva all'altezza delle spalle, non oltre. Scendi in 2 secondi. Se dondoli il carico è troppo: per il deltoide laterale meglio 1 kg in meno ma pulito.",
+ e7:"Petto appoggiato, porta le braccia indietro e leggermente aperte. Pensa a spingere i gomiti indietro, non a tirare con le mani. Stringi 1 secondo alla fine e controlla il ritorno.",
+ e8:"Pausa di 1-2 secondi in fondo, nel massimo allungamento, poi sali tutto sulle punte. Il polpaccio cresce con allungamento e controllo, non con il rimbalzo.",
+ e9:"Parti appeso con le scapole giù, porta il mento sopra la sbarra tirando i gomiti verso i fianchi e scendi in controllo fino a braccia tese. Niente dondolio. Quando chiudi tutte le serie pulite, aggiungi zavorra.",
+ e10:"Petto alto e tira la maniglia verso la parte alta del petto con i gomiti verso il basso. Non usare il busto per dare slancio. Fermati 1 secondo a fine trazione e risali lento.",
+ e11:"Busto inclinato e fermo, tira verso l'addome alto, stringi le scapole in fondo e scendi lentamente fino ad allungare bene i dorsali. Se il busto si alza ad ogni ripetizione il carico è troppo.",
+ e12:"Busto fermo, gomiti vicini ai fianchi, stringi 1 secondo a fine trazione. Nella rest pause finale: fai le 8, respira 10-15 secondi e aggiungi le altre 5.",
+ e13:"Gomiti incollati ai fianchi, estendi completamente e stringi 1 secondo in basso. Il carico sale solo se i gomiti restano fermi per tutta la serie.",
+ e14:"Gomiti fermi, estensione completa e ritorno lento controllando il cavo. Il tricipite risponde bene alla tensione costante: non lasciar cadere il peso.",
+ e15:"Schiena appoggiata e spalle basse. Estendi completamente senza sollevare le spalle. Nell'ultima serie stripping: scendi di carico subito, senza riposo, e continua fino alle ripetizioni indicate.",
+ e16:"Scapole addotte e abbassate, piedi a terra, bilanciere sul petto basso con i gomiti a circa 45-70°. Spingi verso l'alto e leggermente indietro. Con 4×5 a carico alto usa sempre i fermi di sicurezza o un compagno.",
+ e17:"Panca a circa 30°. Scendi con controllo finché senti il petto allungarsi, poi spingi senza far toccare i manubri in alto. Questo esercizio costruisce la parte alta del petto: non far salire le spalle verso le orecchie.",
+ e18:"Spalle indietro e giù, stringi 1 secondo al centro e torna lentamente senza far appoggiare lo stack. Qui puoi avvicinarti al cedimento in sicurezza nell'ultima serie.",
+ e19:"Gomiti fermi, ruota il polso verso l'alto mentre sali e scendi in 2-3 secondi. Niente dondolio del busto.",
+ e20:"Presa neutra e gomiti vicini al corpo. Lavori brachiale e brachioradiale, che danno spessore al braccio. Stesso controllo del curl: scendi lento.",
+ e21:"Braccia ben appoggiate, scendi fin quasi all'estensione completa senza rilassare il bicipite. Nel drop set scala il carico subito, senza riposo, e completa le ripetizioni."
+};
+var GTIPS={Gambe:"Controlla la discesa e lavora in tutto il range di movimento: le gambe crescono con tensione e profondità.",Spalle:"Tecnica pulita e carico progressivo: le spalle si rovinano con lo slancio.",Polpacci:"Pausa in allungamento e ritorno lento.",Dorsali:"Pensa a tirare con i gomiti, non con le mani, e stringi le scapole a fine movimento.",Tricipiti:"Gomiti fermi e estensione completa.",Petto:"Scapole fisse e controllo in discesa.",Bicipiti:"Gomiti fermi e discesa lenta."};
+var STEP={e1:5,e2:5,e3:2.5,e4:2.5,e5:1.25,e6:1,e7:2.5,e8:5,e9:2.5,e10:2.5,e11:2.5,e12:2.5,e13:2.5,e14:2.5,e15:2.5,e16:2.5,e17:2,e18:2.5,e19:1,e20:1,e21:2.5};
+function fmtN(n){return String(Math.round(n*100)/100).replace(".",",");}
+function stepFor(e){return STEP[e.id]||(/mano/.test(e.unit||"")?1:2.5);}
+function hist(id){var r=[];S.logs.forEach(function(l){(l.entries||[]).forEach(function(x){if(x.exId===id&&x.sets&&x.sets.length)r.push({date:l.date,sets:x.sets});});});return r;}
+function maxLoad(sets){var m=NaN;sets.forEach(function(s){var n=num(s.load);if(!isNaN(n)&&(isNaN(m)||n>m))m=n;});return m;}
+function cleared(sets,N,T){return sets.length>=N&&sets.every(function(s){return repsSum(s.reps)>=T;});}
+function e1rm(sets){var b=0;sets.forEach(function(s){var l=num(s.load),r=repsSum(s.reps);if(!isNaN(l)&&r>0){var v=l*(1+r/30);if(v>b)b=v;}});return b;}
+function withLoad(e,n){var m=String(e.load||"").match(/^[^\d-]*-?\d+(?:[.,]\d+)?(.*)$/);return fmtN(n)+(m&&/→/.test(m[1])?m[1]:"");}
+function coachAdvice(e){
+  var N=e.sets,T=repsSum(e.reps),L=num(e.load),H=hist(e.id),u=e.unit?" "+e.unit:"",out={lines:[],suggest:null};
+  if(!(T>0))return out;
+  if(!H.length){out.lines.push("Prima seduta su questo esercizio: parti da "+e.load+u+" e fermati con 2 ripetizioni di scorta. Il numero da battere è "+N+"×"+e.reps+".");return out;}
+  var last=H[0],lu=maxLoad(last.sets),ok=cleared(last.sets,N,T),prev=H[1],miss=0;
+  last.sets.forEach(function(s){miss+=Math.max(0,T-repsSum(s.reps));});miss+=Math.max(0,N-last.sets.length)*T;
+  var when=fmtDate(last.date);
+  if(isNaN(lu)){
+    out.lines.push(ok?"Il "+when+" hai chiuso "+N+"×"+e.reps+". Prossima volta aggiungi 1 ripetizione per serie oppure 2,5 kg di zavorra.":"Il "+when+" ti mancavano "+miss+" ripetizioni. Chiudi "+N+"×"+e.reps+" a corpo libero prima di aggiungere zavorra.");
+  }else{
+    var st=stepFor(e),next=lu+st,stall=prev&&!ok&&!cleared(prev.sets,N,T)&&maxLoad(prev.sets)===lu;
+    if(ok){
+      if(!isNaN(L)&&L>=next-0.001)out.lines.push("Hai già alzato il carico a "+e.load+u+": bene. Obiettivo ora: ripetere "+N+"×"+e.reps+" con tecnica pulita prima di salire ancora.");
+      else{out.lines.push("Il "+when+" hai chiuso "+N+"×"+e.reps+" con "+fmtN(lu)+u+". Prossima seduta sali a "+withLoad(e,next)+u+".");out.suggest=withLoad(e,next);}
+    }else if(stall){
+      var d=Math.max(st,Math.round(lu*0.9/st)*st);
+      out.lines.push("Due sedute di fila senza chiudere le serie con "+fmtN(lu)+u+": non forzare. Scarica a "+withLoad(e,d)+u+" per una seduta con tecnica perfetta, poi risali.");out.suggest=withLoad(e,d);
+    }else if(miss<=2){
+      out.lines.push("Il "+when+" ti mancavano solo "+miss+" ripetizioni in totale con "+fmtN(lu)+u+". Tieni il carico e chiudi "+N+"×"+e.reps+" prima di salire.");
+    }else{
+      out.lines.push("Il "+when+" con "+fmtN(lu)+u+" ti mancavano "+miss+" ripetizioni in totale. Tieni il carico: l'obiettivo è "+N+"×"+e.reps+" su tutte le serie, rispettando i recuperi.");
+    }
+    if(!isNaN(L)&&L>lu+0.001&&!ok&&!stall)out.lines.unshift("Hai alzato il carico a "+e.load+u+": ripeti "+N+"×"+e.reps+" e nelle prime serie lascia 2 ripetizioni di scorta.");
+  }
+  if(H.length>=2){
+    var a=e1rm(H[H.length-1].sets),b=e1rm(last.sets);
+    if(a>0&&b>0){var pct=Math.round((b/a-1)*100);
+      if(pct>0)out.lines.push("Dal "+fmtDate(H[H.length-1].date)+" la tua forza stimata su questo esercizio è salita del "+pct+"% in "+H.length+" sedute.");
+      else if(pct<=-3)out.lines.push("La forza stimata è scesa del "+Math.abs(pct)+"% rispetto al "+fmtDate(H[H.length-1].date)+": controlla sonno, calorie e proteine, e valuta una seduta di scarico.");
+      else out.lines.push("Forza stabile da "+H.length+" sedute: serve più tensione, non più serie. Cura il recupero e la progressione in piccoli passi.");}
+  }
+  return out;
+}
+function coachHtml(e){
+  if(e.group==="Cardio"||e.group==="Addome")return "";
+  var tip=TIPS[e.id]||GTIPS[e.group]||"",c=coachAdvice(e),h='<div class="coach"><div class="clab">Coach</div>';
+  if(tip)h+='<p class="ctip">'+esc(tip)+'</p>';
+  if(c.lines.length){h+='<div class="clab" style="margin-top:12px">Prossima seduta</div>';c.lines.forEach(function(t){h+='<p class="cnext">'+esc(t)+'</p>';});}
+  if(c.suggest)h+='<button class="btn small" style="margin:10px 0 0" data-act="coachuse" data-id="'+e.id+'" data-v="'+esc(c.suggest)+'">Usa '+esc(c.suggest)+esc(e.unit?" "+e.unit:"")+'</button>';
+  return h+'</div>';
+}
+
 /* ---------- Icone ---------- */
 var IC={
  oggi:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 6.5v11M17.5 6.5v11M3.5 9v6M20.5 9v6M6.5 12h11"/></svg>',
@@ -356,6 +435,7 @@ function viewOggi(){
       h+='<div class="ex glass"><button class="exrow" data-act="open" data-id="'+e.id+'"><span class="grow"><div class="name">'+esc(e.name)+'</div><div class="spec">'+e.sets+' × '+esc(e.reps)+' · '+esc(e.load)+(e.unit?' '+esc(e.unit):'')+(e.rest?' · '+fmtRest(e.rest):'')+'</div></span>'+ring(done,e.sets,tint)+'</button>';
       if(open){
         h+='<div class="detail">';
+        h+=coachHtml(e);
         if(e.tag)h+='<span class="tag">'+esc(e.tag)+'</span>';
         if(e.note)h+='<p class="hint">'+esc(e.note)+'</p>';
         if(e.group==="Addome"){
@@ -628,6 +708,7 @@ document.addEventListener("click",function(ev){
   if(a!=="del"&&a!=="reset"&&a!=="dellog")S.pend=null;
   if(a==="tab"){S.tab=b.dataset.v;S.pend=null;render();window.scrollTo(0,0);}
   else if(a==="day"){S.day=+b.dataset.v;S.open=null;if(S.tab==="progressi")S.tab="oggi";render();window.scrollTo(0,0);}
+  else if(a==="coachuse"){var ce2=findEx(id);if(ce2){ce2.load=b.dataset.v;var dr2=S.draft[d.id];if(dr2&&dr2.sets[ce2.id])dr2.sets[ce2.id].forEach(function(s){if(!s.done)s.load=ce2.load;});savePlan();saveDraft();toast("Carico aggiornato");render();}}
   else if(a==="abs-play"){plOpen();}
   else if(a==="p-close"){plClose();}
   else if(a==="p-toggle"){plToggle();}
