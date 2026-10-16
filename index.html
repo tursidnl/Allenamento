@@ -243,11 +243,11 @@ function ring(done,total,tint){
 
 /* ---------- Viste ---------- */
 function chips(){return '<div class="chips">'+S.plan.map(function(d,i){return '<button class="chip'+(i===S.day?" on":"")+'" data-act="day" data-v="'+i+'">'+esc(d.name)+'</button>';}).join("")+'</div>';}
-function statusDot(){return '<span class="stat-dot'+(S.syncOn?"":" off")+'"><i></i>'+(S.syncOn?"Sincronizzato":"Su questo dispositivo")+'</span>';}
+function statusDot(){return '';var _x='<span class="stat-dot'+(S.syncOn?"":" off")+'"><i></i>'+(S.syncOn?"Sincronizzato":"Su questo dispositivo")+'</span>';}
 function estMinutes(d){var s=0;d.exercises.forEach(function(e){s+=e.sets*(e.rest+40);});return Math.round(s/60/5)*5;}
 
 function glabel(d,g,n){
-  var k=S.day+":"+g.name,shut=!!S.gc[k];
+  var k=S.day+":"+g.name,shut=!S.gc[k];
   return '<button class="glabel'+(shut?' shut':'')+'" data-act="grp" data-v="'+esc(k)+'" aria-expanded="'+(!shut)+'"><i style="background:'+g.color+'"></i>'+esc(g.name)+'<span class="gcount">'+n+(n===1?' esercizio':' esercizi')+'</span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></button>';
 }
 function viewOggi(){
@@ -261,7 +261,7 @@ function viewOggi(){
     var exs=d.exercises.filter(function(e){return e.group===g.name;}),total=exs.length;
     if(!exs.length)return;
     h+=glabel(d,g,total)+'<div class="stack">';
-    if(S.gc[S.day+":"+g.name])exs=[];
+    if(!S.gc[S.day+":"+g.name])exs=[];
     exs.forEach(function(e){
       var sets=setsFor(d,e),done=sets.filter(function(s){return s.done;}).length,open=S.open===e.id;
       h+='<div class="ex glass"><button class="exrow" data-act="open" data-id="'+e.id+'"><span class="grow"><div class="name">'+esc(e.name)+'</div><div class="spec">'+e.sets+' × '+esc(e.reps)+' · '+esc(e.load)+(e.unit?' '+esc(e.unit):'')+' · '+fmtRest(e.rest)+'</div></span>'+ring(done,e.sets,tint)+'</button>';
@@ -294,7 +294,7 @@ function viewScheda(){
   d.groups.forEach(function(g){
     var exs=d.exercises.filter(function(e){return e.group===g.name;}),total=exs.length;
     h+=glabel(d,g,total)+'<div class="stack">';
-    if(S.gc[S.day+":"+g.name])exs=[];
+    if(!S.gc[S.day+":"+g.name])exs=[];
     exs.forEach(function(e){
       h+='<div class="edit glass"><div class="top"><input type="text" data-pf="name" data-id="'+e.id+'" value="'+esc(e.name)+'" aria-label="Nome esercizio"><button class="link red" data-act="del" data-id="'+e.id+'">'+(S.pend==="del:"+e.id?"Conferma":"Elimina")+'</button></div>';
       h+='<div class="g2"><div class="f"><label>Serie</label><div class="stepper"><button data-act="sets-" data-id="'+e.id+'" aria-label="Meno serie">−</button><span>'+e.sets+'</span><button data-act="sets+" data-id="'+e.id+'" aria-label="Più serie">+</button></div></div>';
@@ -304,7 +304,7 @@ function viewScheda(){
       h+='<div class="f"><label>Unità</label><input type="text" data-pf="unit" data-id="'+e.id+'" value="'+esc(e.unit)+'" placeholder="kg"></div></div>';
       h+='<div class="f"><label>Nota</label><input type="text" style="text-align:left;font-weight:500;font-size:15px" data-pf="note" data-id="'+e.id+'" value="'+esc(e.note)+'"></div></div>';
     });
-    if(!S.gc[S.day+":"+g.name])h+='<button class="addrow" data-act="add" data-g="'+esc(g.name)+'">+ Aggiungi a '+esc(g.name)+'</button>';
+    if(S.gc[S.day+":"+g.name])h+='<button class="addrow" data-act="add" data-g="'+esc(g.name)+'">+ Aggiungi a '+esc(g.name)+'</button>';
     h+='</div>';
   });
   h+='<button class="btn sec" data-act="reset">'+(S.pend==="reset"?"Conferma: ripristina l\'originale":"Ripristina scheda originale")+'</button>';
