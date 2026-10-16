@@ -148,11 +148,12 @@ textarea{font-size:13px;font-family:ui-monospace,Menlo,monospace;text-align:left
 (function(){
 "use strict";
 /* ---------- Scheda di partenza ---------- */
-var G={gambe:"#30D158",spalle:"#FFB340",polpacci:"#40D6C4",dorsali:"#4DA3FF",tricipiti:"#C78BFF",petto:"#FF7A4D",bicipiti:"#FF5C8A"};
+var G={gambe:"#30D158",spalle:"#FFB340",polpacci:"#40D6C4",dorsali:"#4DA3FF",tricipiti:"#C78BFF",petto:"#FF7A4D",bicipiti:"#FF5C8A",cardio:"#FF453A"};
 var TINT=["#30D158","#4DA3FF","#FF7A4D"];
 function ex(id,name,group,sets,reps,load,unit,rest,note,tag){return{id:id,name:name,group:group,sets:sets,reps:reps,load:load,unit:unit,rest:rest,note:note||"",tag:tag||""};}
 var DEFAULT_PLAN=[
- {id:"d1",name:"Giorno 1",sub:"Gambe · Spalle",groups:[{name:"Gambe",color:G.gambe},{name:"Spalle",color:G.spalle},{name:"Polpacci",color:G.polpacci}],exercises:[
+ {id:"d1",name:"Giorno 1",sub:"Gambe · Spalle",groups:[{name:"Cardio",color:G.cardio},{name:"Gambe",color:G.gambe},{name:"Spalle",color:G.spalle},{name:"Polpacci",color:G.polpacci}],exercises:[
+  ex("ec1","Cardio","Cardio",1,"5 min","6,5","km/h",0,"Cardio a velocità sostenuta, 5 minuti."),
   ex("e1","Pressa 45°","Gambe",4,"8","120","kg",120,"Circa l'85% del tuo 140×4."),
   ex("e2","Stacchi gambe tese","Gambe",3,"8","50","kg tot.",120,"Multipower, schiena neutra. Parti leggero e sali."),
   ex("e3","Leg extension","Gambe",4,"10","45","",60,"Superset con leg curling se la sala è libera."),
@@ -185,7 +186,17 @@ var db=null;
 
 function lsGet(k){try{return JSON.parse(localStorage.getItem(k));}catch(e){return null;}}
 function lsSet(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
-var p0=lsGet("dt.plan"); if(p0&&p0.length)S.plan=p0;
+function migrate(plan){
+  try{
+    var d=plan&&plan[0];
+    if(d&&d.id==="d1"&&!d.groups.some(function(g){return g.name==="Cardio";})&&!d.exercises.some(function(e){return e.id==="ec1";})){
+      d.groups.unshift({name:"Cardio",color:G.cardio});
+      d.exercises.unshift(clone(DEFAULT_PLAN[0].exercises[0]));
+    }
+  }catch(e){}
+  return plan;
+}
+var p0=lsGet("dt.plan"); if(p0&&p0.length)S.plan=migrate(p0);
 var l0=lsGet("dt.logs"); if(l0&&l0.length)S.logs=l0;
 var d0=lsGet("dt.draft"); if(d0)S.draft=d0;
 
@@ -264,7 +275,7 @@ function viewOggi(){
     if(!S.gc[S.day+":"+g.name])exs=[];
     exs.forEach(function(e){
       var sets=setsFor(d,e),done=sets.filter(function(s){return s.done;}).length,open=S.open===e.id;
-      h+='<div class="ex glass"><button class="exrow" data-act="open" data-id="'+e.id+'"><span class="grow"><div class="name">'+esc(e.name)+'</div><div class="spec">'+e.sets+' × '+esc(e.reps)+' · '+esc(e.load)+(e.unit?' '+esc(e.unit):'')+' · '+fmtRest(e.rest)+'</div></span>'+ring(done,e.sets,tint)+'</button>';
+      h+='<div class="ex glass"><button class="exrow" data-act="open" data-id="'+e.id+'"><span class="grow"><div class="name">'+esc(e.name)+'</div><div class="spec">'+e.sets+' × '+esc(e.reps)+' · '+esc(e.load)+(e.unit?' '+esc(e.unit):'')+(e.rest?' · '+fmtRest(e.rest):'')+'</div></span>'+ring(done,e.sets,tint)+'</button>';
       if(open){
         h+='<div class="detail">';
         if(e.tag)h+='<span class="tag">'+esc(e.tag)+'</span>';
@@ -510,7 +521,7 @@ document.addEventListener("click",function(ev){
     var box=document.getElementById("restoreBox"),o=null;
     try{o=JSON.parse(box.value);}catch(e){}
     if(!o||!o.plan||!o.plan.length||!Array.isArray(o.logs)){toast("Backup non valido");return;}
-    S.plan=o.plan;S.logs=o.logs;sortLogs();lsSet("dt.plan",S.plan);saveLogLocal();toast("Dati ripristinati");render();return;
+    S.plan=migrate(o.plan);S.logs=o.logs;sortLogs();lsSet("dt.plan",S.plan);saveLogLocal();toast("Dati ripristinati");render();return;
   }
   if(a!=="del"&&a!=="reset"&&a!=="dellog")S.pend=null;
   if(a==="tab"){S.tab=b.dataset.v;S.pend=null;render();window.scrollTo(0,0);}
@@ -583,7 +594,7 @@ function initDb(){
       if(snap.metadata&&snap.metadata.hasPendingWrites)return;
       if(snap.exists){
         var dd=snap.data();
-        if(first&&dd&&dd.days&&dd.days.length){S.plan=clone(dd.days);lsSet("dt.plan",S.plan);}
+        if(first&&dd&&dd.days&&dd.days.length){S.plan=migrate(clone(dd.days));lsSet("dt.plan",S.plan);}
       }else if(first){
         db.doc("app/plan").set({days:S.plan,updated:Date.now()}).catch(function(){});
       }
