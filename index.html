@@ -669,7 +669,6 @@ function rearmAudio(){var t=S.timer;if(!t)return;armAudio(Math.max(0,(t.end-Date
 function startTimer(sec,name,cardio){
   keepAwake();
   S.timer={end:Date.now()+sec*1000,total:sec*1000,name:name,fired:false,cardio:!!cardio,audioOk:false};
-  armAudio(sec);
   clearInterval(tiv);tiv=setInterval(tick,250);drawTimer();
 }
 function stopTimer(){disarmAudio();S.timer=null;clearInterval(tiv);document.getElementById("timerhost").innerHTML="";}
@@ -748,10 +747,18 @@ function webBeep(){
     });
   }catch(e){}
 }
+function chimeFallback(){
+  try{if(chimeEl&&chimeEl.dataset.ready==="1"){chimeEl.currentTime=0;var p=chimeEl.play();if(p&&p.catch)p.catch(function(){});}}catch(e){}
+}
 function beep(){
-  var played=false;
-  try{if(chimeEl&&chimeEl.dataset.ready==="1"){chimeEl.currentTime=0;var p=chimeEl.play();played=true;if(p&&p.catch)p.catch(webBeep);}}catch(e){}
-  if(!played)webBeep();
+  /* La campanella con Web Audio suona anche quando parte da sola a fine timer (verificato col tuo test). */
+  try{
+    if(AC){
+      var go=function(){webBeep();};
+      if(AC.state==="running")go();
+      else{var r=AC.resume();if(r&&r.then)r.then(go).catch(chimeFallback);else go();}
+    }else chimeFallback();
+  }catch(e){chimeFallback();}
   try{if(navigator.vibrate)navigator.vibrate([120,60,120,60,250]);}catch(e){}
 }
 function keepAwake(){
@@ -841,8 +848,8 @@ document.addEventListener("click",function(ev){
     render();
   }
   else if(a==="finish")finish();
-  else if(a==="t+"&&S.timer){S.timer.end+=15000;S.timer.total+=15000;S.timer.fired=false;drawTimer();rearmAudio();}
-  else if(a==="t-"&&S.timer){S.timer.end-=15000;S.timer.total=Math.max(1000,S.timer.total-15000);drawTimer();rearmAudio();}
+  else if(a==="t+"&&S.timer){S.timer.end+=15000;S.timer.total+=15000;S.timer.fired=false;drawTimer();}
+  else if(a==="t-"&&S.timer){S.timer.end-=15000;S.timer.total=Math.max(1000,S.timer.total-15000);drawTimer();}
   else if(a==="tx")stopTimer();
   else if(a==="sets+"){mutPlan(id,function(e){e.sets=Math.min(12,e.sets+1);});render();}
   else if(a==="sets-"){mutPlan(id,function(e){e.sets=Math.max(1,e.sets-1);});render();}
