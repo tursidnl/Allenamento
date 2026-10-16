@@ -520,7 +520,7 @@ function viewOggi(){
     });
     h+='</div>';
   });
-  h+='<div style="text-align:center;margin-top:26px"><button class="link" data-act="testsound">Prova il suono di fine recupero</button></div>';
+  h+='<div style="text-align:center;margin-top:26px"><button class="link" data-act="testsound">Prova il suono di fine recupero</button><br><button class="link" data-act="testtimer">Prova un timer da 5 secondi</button></div>';
   return h;
 }
 
@@ -797,6 +797,7 @@ document.addEventListener("click",function(ev){
   var b=ev.target.closest("[data-act]");if(!b)return;
   var a=b.dataset.act,id=b.dataset.id,d=curDay();
   unlockAudio();
+  if(a==="testtimer"){startTimer(5,"Prova timer");toast("Aspetta 5 secondi: deve suonare");return;}
   if(a==="testsound"){
     toast("Suono 1 di 2…");
     try{if(chimeEl&&chimeEl.dataset.ready==="1"){chimeEl.currentTime=0;var tp1=chimeEl.play();if(tp1&&tp1.catch)tp1.catch(function(er){toast("Suono 1 non partito: "+(er&&er.name||"errore"));});}else toast("Suono 1 non pronto, riprova");}catch(e){toast("Suono 1 errore");}
