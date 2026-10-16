@@ -45,12 +45,16 @@ h1{font-size:46px;line-height:1.02;font-weight:800;letter-spacing:-.035em;margin
 .facts{display:flex;align-items:center;gap:10px;margin:14px 0 22px;font-size:14px;color:var(--fg2);font-variant-numeric:tabular-nums}
 .facts i{width:3px;height:3px;border-radius:50%;background:var(--fg3)}
 
-.chips{display:flex;gap:8px;margin:0 0 6px;overflow-x:auto;scrollbar-width:none}
+.chips{display:flex;gap:8px;margin:0 0 6px}
 .chips::-webkit-scrollbar{display:none}
-.chip{flex:none;border:.5px solid var(--line);background:var(--glass);color:var(--fg2);font:600 14px var(--font);padding:9px 18px;border-radius:99px;-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);transition:background .2s,color .2s}
+.chip{flex:1;text-align:center;border:.5px solid var(--line);background:var(--glass);color:var(--fg2);font:600 14px var(--font);padding:11px 4px;border-radius:99px;-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);transition:background .2s,color .2s}
 .chip.on{background:var(--fg);color:#0A0A0C;border-color:transparent}
 
 .glabel{display:flex;align-items:center;gap:12px;margin:30px 2px 12px;font-size:26px;line-height:1.02;font-weight:800;letter-spacing:-.035em;color:var(--fg)}
+button.glabel{width:calc(100% - 4px);background:transparent;border:0;padding:0;text-align:left;font-family:var(--font);cursor:pointer}
+.glabel .gcount{margin-left:auto;font-size:13px;font-weight:600;letter-spacing:0;color:var(--fg2)}
+.glabel .chev{width:20px;height:20px;flex:none;color:var(--fg2);transition:transform .25s}
+.glabel.shut .chev{transform:rotate(-90deg)}
 .glabel i{width:12px;height:12px;border-radius:50%;flex:none}
 .stack{display:grid;gap:8px}
 .ex{border-radius:22px;overflow:hidden}
@@ -176,7 +180,7 @@ var DEFAULT_PLAN=[
 function clone(o){return JSON.parse(JSON.stringify(o));}
 
 /* ---------- Stato ---------- */
-var S={plan:clone(DEFAULT_PLAN),logs:[],draft:{},tab:"oggi",day:0,open:null,prog:null,metric:"load",timer:null,pend:null,syncOn:false};
+var S={plan:clone(DEFAULT_PLAN),logs:[],draft:{},tab:"oggi",day:0,open:null,prog:null,metric:"load",timer:null,pend:null,syncOn:false,gc:{}};
 var db=null;
 
 function lsGet(k){try{return JSON.parse(localStorage.getItem(k));}catch(e){return null;}}
@@ -242,6 +246,10 @@ function chips(){return '<div class="chips">'+S.plan.map(function(d,i){return '<
 function statusDot(){return '<span class="stat-dot'+(S.syncOn?"":" off")+'"><i></i>'+(S.syncOn?"Sincronizzato":"Su questo dispositivo")+'</span>';}
 function estMinutes(d){var s=0;d.exercises.forEach(function(e){s+=e.sets*(e.rest+40);});return Math.round(s/60/5)*5;}
 
+function glabel(d,g,n){
+  var k=S.day+":"+g.name,shut=!!S.gc[k];
+  return '<button class="glabel'+(shut?' shut':'')+'" data-act="grp" data-v="'+esc(k)+'" aria-expanded="'+(!shut)+'"><i style="background:'+g.color+'"></i>'+esc(g.name)+'<span class="gcount">'+n+(n===1?' esercizio':' esercizi')+'</span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></button>';
+}
 function viewOggi(){
   var d=curDay(),tint=tintOf(S.day);
   var nsets=d.exercises.reduce(function(a,e){return a+e.sets;},0);
@@ -250,9 +258,10 @@ function viewOggi(){
   h+='<div class="facts"><span>'+d.exercises.length+' esercizi</span><i></i><span>'+nsets+' serie</span><i></i><span>circa '+estMinutes(d)+' min</span></div>';
   h+=chips();
   d.groups.forEach(function(g){
-    var exs=d.exercises.filter(function(e){return e.group===g.name;});
+    var exs=d.exercises.filter(function(e){return e.group===g.name;}),total=exs.length;
     if(!exs.length)return;
-    h+='<div class="glabel"><i style="background:'+g.color+'"></i>'+esc(g.name)+'</div><div class="stack">';
+    h+=glabel(d,g,total)+'<div class="stack">';
+    if(S.gc[S.day+":"+g.name])exs=[];
     exs.forEach(function(e){
       var sets=setsFor(d,e),done=sets.filter(function(s){return s.done;}).length,open=S.open===e.id;
       h+='<div class="ex glass"><button class="exrow" data-act="open" data-id="'+e.id+'"><span class="grow"><div class="name">'+esc(e.name)+'</div><div class="spec">'+e.sets+' × '+esc(e.reps)+' · '+esc(e.load)+(e.unit?' '+esc(e.unit):'')+' · '+fmtRest(e.rest)+'</div></span>'+ring(done,e.sets,tint)+'</button>';
@@ -283,8 +292,9 @@ function viewScheda(){
   var d=curDay();
   var h='<div class="eyebrow"><span>Modifica</span>'+statusDot()+'</div><h1>Scheda</h1><p class="sub">Serie, ripetizioni, carichi e recuperi. I cambi valgono dalla prossima sessione.</p><div style="height:20px"></div>'+chips();
   d.groups.forEach(function(g){
-    var exs=d.exercises.filter(function(e){return e.group===g.name;});
-    h+='<div class="glabel"><i style="background:'+g.color+'"></i>'+esc(g.name)+'</div><div class="stack">';
+    var exs=d.exercises.filter(function(e){return e.group===g.name;}),total=exs.length;
+    h+=glabel(d,g,total)+'<div class="stack">';
+    if(S.gc[S.day+":"+g.name])exs=[];
     exs.forEach(function(e){
       h+='<div class="edit glass"><div class="top"><input type="text" data-pf="name" data-id="'+e.id+'" value="'+esc(e.name)+'" aria-label="Nome esercizio"><button class="link red" data-act="del" data-id="'+e.id+'">'+(S.pend==="del:"+e.id?"Conferma":"Elimina")+'</button></div>';
       h+='<div class="g2"><div class="f"><label>Serie</label><div class="stepper"><button data-act="sets-" data-id="'+e.id+'" aria-label="Meno serie">−</button><span>'+e.sets+'</span><button data-act="sets+" data-id="'+e.id+'" aria-label="Più serie">+</button></div></div>';
@@ -294,7 +304,8 @@ function viewScheda(){
       h+='<div class="f"><label>Unità</label><input type="text" data-pf="unit" data-id="'+e.id+'" value="'+esc(e.unit)+'" placeholder="kg"></div></div>';
       h+='<div class="f"><label>Nota</label><input type="text" style="text-align:left;font-weight:500;font-size:15px" data-pf="note" data-id="'+e.id+'" value="'+esc(e.note)+'"></div></div>';
     });
-    h+='<button class="addrow" data-act="add" data-g="'+esc(g.name)+'">+ Aggiungi a '+esc(g.name)+'</button></div>';
+    if(!S.gc[S.day+":"+g.name])h+='<button class="addrow" data-act="add" data-g="'+esc(g.name)+'">+ Aggiungi a '+esc(g.name)+'</button>';
+    h+='</div>';
   });
   h+='<button class="btn sec" data-act="reset">'+(S.pend==="reset"?"Conferma: ripristina l\'originale":"Ripristina scheda originale")+'</button>';
   return h;
@@ -504,6 +515,7 @@ document.addEventListener("click",function(ev){
   if(a!=="del"&&a!=="reset"&&a!=="dellog")S.pend=null;
   if(a==="tab"){S.tab=b.dataset.v;S.pend=null;render();window.scrollTo(0,0);}
   else if(a==="day"){S.day=+b.dataset.v;S.open=null;render();}
+  else if(a==="grp"){S.gc[b.dataset.v]=!S.gc[b.dataset.v];render();}
   else if(a==="open"){S.open=S.open===id?null:id;render();}
   else if(a==="chk"){
     var e=findEx(id),sets=setsFor(d,e),i=+b.dataset.i;
