@@ -626,29 +626,53 @@ function render(){
 
 /* ---------- Timer di recupero ---------- */
 var tiv=null;
-/* Loop quasi muto: tiene viva l'app (e il timer) anche con schermo bloccato o app in secondo piano su iPhone. */
-var keepEl=null;
-function keepAliveOn(){
+/* Traccia pre-registrata: silenzio per la durata del recupero + campanella alla fine.
+   Il telefono la riproduce da solo anche con schermo bloccato o app in secondo piano, senza dipendere dal timer JavaScript. */
+var timerEl=null,timerUrl=null;
+var TSR=16000;
+function chimeSamples(sr){
+  var n=Math.round(sr*3.6),f=new Float32Array(n);
+  CHIME.forEach(function(c){
+    var st=Math.round(c[1]*sr);
+    PART.forEach(function(p){
+      var fr=c[0]*p[0],amp=p[1]*.34;
+      for(var i=0;st+i<n;i++){var t=i/sr,env=Math.min(1,i/(sr*.004))*Math.exp(-t*p[2]);if(env<.0004)break;f[st+i]+=Math.sin(2*Math.PI*fr*t)*amp*env;}
+    });
+  });
+  return f;
+}
+function timerBlob(sec){
+  var sil=Math.max(0,Math.round(sec*TSR)),ch=chimeSamples(TSR),n=sil+ch.length;
+  var buf=new ArrayBuffer(44+n*2),dv=new DataView(buf),u8=new Uint8Array(buf);
+  function w(o,t){for(var i=0;i<t.length;i++)u8[o+i]=t.charCodeAt(i);}
+  w(0,"RIFF");dv.setUint32(4,36+n*2,true);w(8,"WAVEfmt ");dv.setUint32(16,16,true);dv.setUint16(20,1,true);dv.setUint16(22,1,true);
+  dv.setUint32(24,TSR,true);dv.setUint32(28,TSR*2,true);dv.setUint16(32,2,true);dv.setUint16(34,16,true);w(36,"data");dv.setUint32(40,n*2,true);
+  var i16=new Int16Array(buf,44,n);
+  for(var i=0;i<sil;i++)i16[i]=(i&1)?1:-1;
+  for(var k=0;k<ch.length;k++){var v=Math.max(-1,Math.min(1,ch[k]));i16[sil+k]=Math.round(v*32767);}
+  return new Blob([buf],{type:"audio/wav"});
+}
+function armAudio(sec){
   try{
-    if(!keepEl){
-      var sr=8000,n=sr,buf=new Uint8Array(44+n*2),dv=new DataView(buf.buffer);
-      function w(o,t){for(var i=0;i<t.length;i++)buf[o+i]=t.charCodeAt(i);}
-      w(0,"RIFF");dv.setUint32(4,36+n*2,true);w(8,"WAVEfmt ");dv.setUint32(16,16,true);dv.setUint16(20,1,true);dv.setUint16(22,1,true);
-      dv.setUint32(24,sr,true);dv.setUint32(28,sr*2,true);dv.setUint16(32,2,true);dv.setUint16(34,16,true);w(36,"data");dv.setUint32(40,n*2,true);
-      for(var i=0;i<n;i++)dv.setInt16(44+i*2,i%2?2:-2,true);
-      var bin="";for(var k=0;k<buf.length;k++)bin+=String.fromCharCode(buf[k]);
-      keepEl=new Audio("data:audio/wav;base64,"+btoa(bin));keepEl.loop=true;keepEl.volume=.05;
-    }
-    var p=keepEl.play();if(p&&p.catch)p.catch(function(){});
+    if(!timerEl)return;
+    var t=S.timer;if(t)t.audioOk=false;
+    if(timerUrl)URL.revokeObjectURL(timerUrl);
+    timerUrl=URL.createObjectURL(timerBlob(sec));
+    timerEl.src=timerUrl;timerEl.muted=false;
+    var p=timerEl.play();
+    if(p&&p.then)p.then(function(){if(S.timer)S.timer.audioOk=true;}).catch(function(){if(S.timer)S.timer.audioOk=false;});
+    else if(t)t.audioOk=true;
   }catch(e){}
 }
-function keepAliveOff(){try{if(keepEl)keepEl.pause();}catch(e){}}
+function disarmAudio(){try{if(timerEl)timerEl.pause();}catch(e){}}
+function rearmAudio(){var t=S.timer;if(!t)return;armAudio(Math.max(0,(t.end-Date.now())/1000));}
 function startTimer(sec,name,cardio){
-  keepAwake();keepAliveOn();
-  S.timer={end:Date.now()+sec*1000,total:sec*1000,name:name,fired:false,cardio:!!cardio};
+  keepAwake();
+  S.timer={end:Date.now()+sec*1000,total:sec*1000,name:name,fired:false,cardio:!!cardio,audioOk:false};
+  armAudio(sec);
   clearInterval(tiv);tiv=setInterval(tick,250);drawTimer();
 }
-function stopTimer(){keepAliveOff();S.timer=null;clearInterval(tiv);document.getElementById("timerhost").innerHTML="";}
+function stopTimer(){disarmAudio();S.timer=null;clearInterval(tiv);document.getElementById("timerhost").innerHTML="";}
 function fmtClock(left){return Math.floor(left/60)+":"+("0"+left%60).slice(-2);}
 function drawTimer(){
   var t=S.timer,host=document.getElementById("timerhost");
@@ -686,6 +710,13 @@ function wavUri(){
 function unlockAudio(){
   try{if(!AC){var C=window.AudioContext||window.webkitAudioContext;if(C)AC=new C();}if(AC&&AC.state==="suspended")AC.resume();}catch(e){}
   try{
+    if(!timerEl){
+      timerEl=new Audio();timerEl.preload="auto";
+      timerEl.src=URL.createObjectURL(timerBlob(0.05));timerEl.muted=true;
+      var tp=timerEl.play();if(tp&&tp.then)tp.then(function(){timerEl.pause();timerEl.currentTime=0;timerEl.muted=false;}).catch(function(){timerEl.muted=false;});
+    }
+  }catch(e){}
+  try{
     if(!chimeEl){chimeEl=new Audio(wavUri());chimeEl.preload="auto";chimeEl.volume=1;chimeEl.dataset.ready="0";
       chimeEl.muted=true;var p=chimeEl.play();
       if(p&&p.then)p.then(function(){chimeEl.pause();chimeEl.currentTime=0;chimeEl.muted=false;chimeEl.dataset.ready="1";}).catch(function(){chimeEl.muted=false;});
@@ -717,7 +748,7 @@ function tick(){
   var t=S.timer;if(!t)return;
   var left=Math.ceil((t.end-Date.now())/1000);
   if(left<=0){
-    if(!t.fired){t.fired=true;beep();drawTimer();setTimeout(function(){if(S.timer&&S.timer.fired)stopTimer();},4000);}
+    if(!t.fired){t.fired=true;if(!t.audioOk)beep();drawTimer();setTimeout(function(){if(S.timer&&S.timer.fired)stopTimer();},4000);}
     return;
   }
   var el=document.getElementById("tt");if(el)el.textContent=fmtClock(left);
@@ -751,7 +782,7 @@ document.addEventListener("click",function(ev){
   var b=ev.target.closest("[data-act]");if(!b)return;
   var a=b.dataset.act,id=b.dataset.id,d=curDay();
   unlockAudio();
-  if(a==="testsound"){beep();return;}
+  if(a==="testsound"){beep();toast("Se non senti nulla: alza il volume e controlla la levetta del silenzioso");return;}
   if(a==="backup"){
     var txt=JSON.stringify({v:1,plan:S.plan,logs:S.logs,fb:FB});
     var done=function(){toast("Backup copiato");};
@@ -789,8 +820,8 @@ document.addEventListener("click",function(ev){
     render();
   }
   else if(a==="finish")finish();
-  else if(a==="t+"&&S.timer){S.timer.end+=15000;S.timer.total+=15000;S.timer.fired=false;drawTimer();}
-  else if(a==="t-"&&S.timer){S.timer.end-=15000;S.timer.total=Math.max(1000,S.timer.total-15000);drawTimer();}
+  else if(a==="t+"&&S.timer){S.timer.end+=15000;S.timer.total+=15000;S.timer.fired=false;drawTimer();rearmAudio();}
+  else if(a==="t-"&&S.timer){S.timer.end-=15000;S.timer.total=Math.max(1000,S.timer.total-15000);drawTimer();rearmAudio();}
   else if(a==="tx")stopTimer();
   else if(a==="sets+"){mutPlan(id,function(e){e.sets=Math.min(12,e.sets+1);});render();}
   else if(a==="sets-"){mutPlan(id,function(e){e.sets=Math.max(1,e.sets-1);});render();}
