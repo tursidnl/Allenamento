@@ -29,13 +29,11 @@ body{
   padding-right:max(20px,env(safe-area-inset-right,0px));
   padding-top:calc(10px + env(safe-area-inset-top,0px));padding-bottom:170px;min-height:100vh;
 }
-body::before{
-  content:"";position:fixed;left:0;right:0;top:0;height:460px;pointer-events:none;z-index:0;
-  background:radial-gradient(110% 90% at 50% -18%,rgba(var(--glow),.42),rgba(var(--glow),.12) 45%,transparent 72%);
-  transition:background .5s;
-}
+.bg{position:fixed;left:0;right:0;top:0;height:min(100vh,900px);z-index:0;pointer-events:none;background:#09090B center top/cover no-repeat;
+  -webkit-mask-image:linear-gradient(to bottom,#000 0,#000 52%,transparent 100%);mask-image:linear-gradient(to bottom,#000 0,#000 52%,transparent 100%)}
+.bg::after{content:"";position:absolute;inset:0;background:linear-gradient(to bottom,rgba(9,9,11,.18),rgba(9,9,11,.5))}
 #app{position:relative;z-index:1;max-width:540px;margin:0 auto}
-.glass{background:var(--glass);-webkit-backdrop-filter:blur(24px) saturate(160%);backdrop-filter:blur(24px) saturate(160%);border:.5px solid var(--line)}
+.glass{box-shadow:inset 0 1px 0 rgba(255,255,255,.07);background:var(--glass);-webkit-backdrop-filter:blur(24px) saturate(160%);backdrop-filter:blur(24px) saturate(160%);border:.5px solid var(--line)}
 
 .eyebrow{display:flex;justify-content:space-between;align-items:center;font-size:12px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--fg2);margin:14px 0 0}
 .stat-dot{display:inline-flex;align-items:center;gap:6px;font-size:11px;letter-spacing:.04em;text-transform:none;font-weight:500;color:var(--fg3)}
@@ -136,6 +134,7 @@ textarea{font-size:13px;font-family:ui-monospace,Menlo,monospace;text-align:left
 </style>
 </head>
 <body>
+<div class="bg" id="bg"></div>
 <div id="app"></div>
 <div id="ctahost"></div>
 <div id="timerhost"></div>
@@ -370,6 +369,8 @@ function render(){
   var t=tintOf(S.day);
   document.documentElement.style.setProperty("--tint",t);
   document.documentElement.style.setProperty("--glow",hexRgb(t));
+  var bgImg=S.tab==="progressi"?"bg-n.jpg":"bg-d"+((S.day%3)+1)+".jpg";
+  var bgEl=document.getElementById("bg");if(bgEl&&bgEl.dataset.i!==bgImg){bgEl.dataset.i=bgImg;bgEl.style.backgroundImage="url("+bgImg+")";}
   var app=document.getElementById("app");
   app.innerHTML=S.tab==="oggi"?viewOggi():S.tab==="scheda"?viewScheda():viewProgressi();
   document.getElementById("tabs").innerHTML=[["oggi","Allenamento"],["scheda","Scheda"],["progressi","Progressi"]].map(function(x){return '<button data-act="tab" data-v="'+x[0]+'" class="'+(S.tab===x[0]?"on":"")+'" aria-label="'+x[1]+'">'+IC[x[0]]+'<span>'+x[1]+'</span></button>';}).join("");
