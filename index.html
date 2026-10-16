@@ -247,6 +247,7 @@ function saveLogLocal(){lsSet("dt.logs",S.logs);}
 
 /* ---------- Sessione in corso ---------- */
 function dayDraft(d){var dr=S.draft[d.id];if(!dr){dr=S.draft[d.id]={started:new Date().toISOString(),sets:{}};}return dr;}
+function markStart(){var dr=dayDraft(curDay());if(!dr.real){dr.started=new Date().toISOString();dr.real=true;saveDraft();}}
 function setsFor(d,e){
   var dr=dayDraft(d),a=dr.sets[e.id]||(dr.sets[e.id]=[]);
   while(a.length<e.sets)a.push({reps:e.reps,load:e.load==="corpo libero"?"":e.load,done:false});
@@ -295,7 +296,7 @@ function plOpen(){
   v.addEventListener("ended",function(){var nx=plNextIdx(PL.i+2);if(nx)plPlay(nx);else{plClose();toast("Addome completato 💪");beep();}});
   v.addEventListener("timeupdate",function(){var b=document.getElementById("pbar");if(b&&v.duration)b.style.width=(v.currentTime/v.duration*100)+"%";});
   v.addEventListener("click",function(){plToggle();});
-  keepAwake();plPlay(first);
+  markStart();keepAwake();plPlay(first);
 }
 function plToggle(){var v=document.getElementById("pv"),pp=document.getElementById("ppp");if(!v)return;if(v.paused){v.play();if(pp)pp.textContent="⏸";}else{v.pause();if(pp)pp.textContent="▶";}}
 function plClose(){var h=document.getElementById("player");if(h){var v=document.getElementById("pv");try{v.pause();v.removeAttribute("src");v.load();}catch(e){}h.remove();}if(PL.url){URL.revokeObjectURL(PL.url);PL.url=null;}}
@@ -486,6 +487,7 @@ function keepAliveOn(){
 }
 function keepAliveOff(){try{if(keepEl)keepEl.pause();}catch(e){}}
 function startTimer(sec,name,cardio){
+  markStart();
   keepAwake();keepAliveOn();
   S.timer={end:Date.now()+sec*1000,total:sec*1000,name:name,fired:false,cardio:!!cardio};
   clearInterval(tiv);tiv=setInterval(tick,250);drawTimer();
@@ -620,6 +622,7 @@ document.addEventListener("click",function(ev){
   else if(a==="open"){S.open=S.open===id?null:id;render();}
   else if(a==="chk"){
     var e=findEx(id),sets=setsFor(d,e),i=+b.dataset.i;
+    if(!sets[i].done)markStart();
     sets[i].done=!sets[i].done;saveDraft();
     if(sets[i].done&&i<sets.length-1)startTimer(e.rest,e.name);
     else if(sets[i].done){stopTimer();}
