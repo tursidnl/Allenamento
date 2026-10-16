@@ -173,7 +173,7 @@ var DEFAULT_PLAN=[
   ex("e6","Alzate laterali","Spalle",4,"12","10","kg /mano",60,"Senza slancio. Se dondoli scendi a 8."),
   ex("e7","Deltoide posteriore macchina","Spalle",2,"12","25","",60,"Carico di partenza, aggiusta tu."),
   ex("e8","Calf machine","Polpacci",4,"10","55","",60,"Pausa in basso, muscolo allungato.")]},
- {id:"d2",name:"Giorno 2",sub:"Dorsali · Tricipiti",groups:[{name:"Dorsali",color:G.dorsali},{name:"Tricipiti",color:G.tricipiti},{name:"Addome",color:G.addome}],exercises:[
+ {id:"d2",name:"Giorno 2",sub:"Dorsali · Tricipiti",groups:[{name:"Addome",color:G.addome},{name:"Dorsali",color:G.dorsali},{name:"Tricipiti",color:G.tricipiti}],exercises:[
   ex("e9","Trazioni alla sbarra","Dorsali",3,"6","corpo libero","",120,"Se ne fai 8 pulite, aggiungi zavorra."),
   ex("e10","Lat machine","Dorsali",2,"10","30","",90,"Maniglia."),
   ex("e11","T-bar","Dorsali",3,"8","35","",120),
@@ -182,7 +182,7 @@ var DEFAULT_PLAN=[
   ex("e14","Tricipiti pulley","Tricipiti",2,"8","30","",60),
   ex("e15","Tricipiti macchina","Tricipiti",2,"10","30","",60,"Carico di partenza, aggiusta tu.","Ultima serie: 10+8+8 stripping"),
   ex("ea2","Allenamento addome","Addome",1,"9 min","","",0,"3 video da 3 minuti, uno dopo l'altro.")]},
- {id:"d3",name:"Giorno 3",sub:"Petto · Bicipiti",groups:[{name:"Petto",color:G.petto},{name:"Bicipiti",color:G.bicipiti},{name:"Addome",color:G.addome}],exercises:[
+ {id:"d3",name:"Giorno 3",sub:"Petto · Bicipiti",groups:[{name:"Addome",color:G.addome},{name:"Petto",color:G.petto},{name:"Bicipiti",color:G.bicipiti}],exercises:[
   ex("e16","Distensioni panca piana","Petto",4,"5","70","kg",150,"Circa l'80% del tuo massimale (87)."),
   ex("e17","Spinte manubri panca inclinata","Petto",3,"8","24","kg /mano",120,"Il tuo carico da 4×8 pulite."),
   ex("e18","Pect machine","Petto",3,"10","50","",60),
@@ -211,6 +211,10 @@ function migrate(plan){
       if(dd&&src&&dd.id===src.id&&!dd.groups.some(function(g){return g.name==="Addome";})){
         dd.groups.push({name:"Addome",color:G.addome});
         dd.exercises.push(clone(src.exercises[src.exercises.length-1]));
+      }
+      if(dd&&dd.groups&&dd.groups.length&&dd.groups[0].name!=="Addome"){
+        var ai=-1;dd.groups.forEach(function(g,k){if(g.name==="Addome")ai=k;});
+        if(ai>0)dd.groups.unshift(dd.groups.splice(ai,1)[0]);
       }
     });
   }catch(e){}
