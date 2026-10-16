@@ -274,7 +274,15 @@ function dayDraft(d){var dr=S.draft[d.id];if(!dr){dr=S.draft[d.id]={started:new 
 function markStart(){var dr=dayDraft(curDay());if(!dr.real){dr.started=new Date().toISOString();dr.real=true;saveDraft();}}
 function setsFor(d,e){
   var dr=dayDraft(d),a=dr.sets[e.id]||(dr.sets[e.id]=[]);
-  while(a.length<e.sets)a.push({reps:e.reps,load:e.load==="corpo libero"?"":e.load,done:false});
+  var pl=e.load==="corpo libero"?"":e.load;
+  a.forEach(function(x){
+    if(x.done)return;
+    /* le serie non ancora fatte seguono la scheda, a meno che tu non le abbia modificate qui */
+    if(x.pr===undefined||x.reps===x.pr){x.reps=e.reps;}
+    if(x.pl===undefined||x.load===x.pl){x.load=pl;}
+    x.pr=e.reps;x.pl=pl;
+  });
+  while(a.length<e.sets)a.push({reps:e.reps,load:pl,done:false,pr:e.reps,pl:pl});
   if(a.length>e.sets)a.length=e.sets;
   return a;
 }
