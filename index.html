@@ -134,6 +134,17 @@ textarea{font-size:13px;font-family:ui-monospace,Menlo,monospace;text-align:left
 .timer.go .t{color:var(--ok)}
 .toast{position:fixed;left:50%;transform:translateX(-50%);z-index:50;bottom:calc(120px + env(safe-area-inset-bottom,0px));background:rgba(245,245,247,.95);color:#0A0A0C;border-radius:99px;padding:11px 20px;font-size:14px;font-weight:600;box-shadow:0 8px 28px rgba(0,0,0,.5)}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+#player{position:fixed;inset:0;z-index:80;background:#000;display:flex;flex-direction:column}
+#player .ptop{display:flex;align-items:center;justify-content:space-between;padding:calc(10px + env(safe-area-inset-top,0px)) 16px 8px;color:#fff;font-weight:700;font-size:15px}
+#player .ptop button{border:0;background:rgba(255,255,255,.14);color:#fff;width:36px;height:36px;border-radius:50%;font-size:16px}
+#player video{flex:1;min-height:0;width:100%;object-fit:contain;background:#000}
+#player .pbar{height:3px;background:rgba(255,255,255,.18)}
+#player .pbar i{display:block;height:100%;width:0;background:#fff}
+#player .pctl{display:flex;justify-content:center;gap:28px;padding:14px 16px calc(16px + env(safe-area-inset-bottom,0px))}
+#player .pctl button{border:0;background:rgba(255,255,255,.14);color:#fff;width:60px;height:60px;border-radius:50%;font-size:22px}
+.vrow{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 0;border-top:.5px solid var(--line)}
+.vrow b{font-weight:600}.vrow span.ok{color:#30D158;font-size:13px;font-weight:600}.vrow span.no{color:var(--fg3);font-size:13px}
+.vrow label{display:inline-block;border-radius:99px;padding:9px 16px;background:var(--glass2);color:var(--fg);font:600 13px var(--font)}
 </style>
 </head>
 <body>
@@ -148,7 +159,7 @@ textarea{font-size:13px;font-family:ui-monospace,Menlo,monospace;text-align:left
 (function(){
 "use strict";
 /* ---------- Scheda di partenza ---------- */
-var G={gambe:"#30D158",spalle:"#FFB340",polpacci:"#40D6C4",dorsali:"#4DA3FF",tricipiti:"#C78BFF",petto:"#FF7A4D",bicipiti:"#FF5C8A",cardio:"#FF453A"};
+var G={gambe:"#30D158",spalle:"#FFB340",polpacci:"#40D6C4",dorsali:"#4DA3FF",tricipiti:"#C78BFF",petto:"#FF7A4D",bicipiti:"#FF5C8A",cardio:"#FF453A",addome:"#FFD60A"};
 var TINT=["#30D158","#4DA3FF","#FF7A4D"];
 function ex(id,name,group,sets,reps,load,unit,rest,note,tag){return{id:id,name:name,group:group,sets:sets,reps:reps,load:load,unit:unit,rest:rest,note:note||"",tag:tag||""};}
 var DEFAULT_PLAN=[
@@ -162,21 +173,23 @@ var DEFAULT_PLAN=[
   ex("e6","Alzate laterali","Spalle",4,"12","10","kg /mano",60,"Senza slancio. Se dondoli scendi a 8."),
   ex("e7","Deltoide posteriore macchina","Spalle",2,"12","25","",60,"Carico di partenza, aggiusta tu."),
   ex("e8","Calf machine","Polpacci",4,"10","55","",60,"Pausa in basso, muscolo allungato.")]},
- {id:"d2",name:"Giorno 2",sub:"Dorsali · Tricipiti",groups:[{name:"Dorsali",color:G.dorsali},{name:"Tricipiti",color:G.tricipiti}],exercises:[
+ {id:"d2",name:"Giorno 2",sub:"Dorsali · Tricipiti",groups:[{name:"Dorsali",color:G.dorsali},{name:"Tricipiti",color:G.tricipiti},{name:"Addome",color:G.addome}],exercises:[
   ex("e9","Trazioni alla sbarra","Dorsali",3,"6","corpo libero","",120,"Se ne fai 8 pulite, aggiungi zavorra."),
   ex("e10","Lat machine","Dorsali",2,"10","30","",90,"Maniglia."),
   ex("e11","T-bar","Dorsali",3,"8","35","",120),
   ex("e12","Rematore al petto","Dorsali",2,"8","50","",120,"","Ultima serie: 8 + 5 rest pause"),
   ex("e13","Pushdown barra corta ai cavi","Tricipiti",2,"10","20","",60,"Gomiti fermi."),
   ex("e14","Tricipiti pulley","Tricipiti",2,"8","30","",60),
-  ex("e15","Tricipiti macchina","Tricipiti",2,"10","30","",60,"Carico di partenza, aggiusta tu.","Ultima serie: 10+8+8 stripping")]},
- {id:"d3",name:"Giorno 3",sub:"Petto · Bicipiti",groups:[{name:"Petto",color:G.petto},{name:"Bicipiti",color:G.bicipiti}],exercises:[
+  ex("e15","Tricipiti macchina","Tricipiti",2,"10","30","",60,"Carico di partenza, aggiusta tu.","Ultima serie: 10+8+8 stripping"),
+  ex("ea2","Allenamento addome","Addome",1,"9 min","","",0,"3 video da 3 minuti, uno dopo l'altro.")]},
+ {id:"d3",name:"Giorno 3",sub:"Petto · Bicipiti",groups:[{name:"Petto",color:G.petto},{name:"Bicipiti",color:G.bicipiti},{name:"Addome",color:G.addome}],exercises:[
   ex("e16","Distensioni panca piana","Petto",4,"5","70","kg",150,"Circa l'80% del tuo massimale (87)."),
   ex("e17","Spinte manubri panca inclinata","Petto",3,"8","24","kg /mano",120,"Il tuo carico da 4×8 pulite."),
   ex("e18","Pect machine","Petto",3,"10","50","",60),
   ex("e19","Curl manubri","Bicipiti",2,"10+10","8","",60),
   ex("e20","Curl hammer","Bicipiti",2,"10+10","8","",60),
-  ex("e21","Curl Larry Scott","Bicipiti",3,"8","25→15","",60,"Alla macchina.","Ultima serie: 8 + 6 drop set")]}
+  ex("e21","Curl Larry Scott","Bicipiti",3,"8","25→15","",60,"Alla macchina.","Ultima serie: 8 + 6 drop set"),
+  ex("ea3","Allenamento addome","Addome",1,"9 min","","",0,"3 video da 3 minuti, uno dopo l'altro.")]}
 ];
 function clone(o){return JSON.parse(JSON.stringify(o));}
 
@@ -193,6 +206,13 @@ function migrate(plan){
       d.groups.unshift({name:"Cardio",color:G.cardio});
       d.exercises.unshift(clone(DEFAULT_PLAN[0].exercises[0]));
     }
+    [1,2].forEach(function(ix){
+      var dd=plan&&plan[ix],src=DEFAULT_PLAN[ix];
+      if(dd&&src&&dd.id===src.id&&!dd.groups.some(function(g){return g.name==="Addome";})){
+        dd.groups.push({name:"Addome",color:G.addome});
+        dd.exercises.push(clone(src.exercises[src.exercises.length-1]));
+      }
+    });
   }catch(e){}
   return plan;
 }
@@ -240,6 +260,42 @@ function lastFor(id){
 function lastText(l){return l.sets.map(function(s){var ld=String(s.load||"").trim();return (ld?ld+" × ":"")+s.reps;}).join(" · ");}
 function sortLogs(){S.logs.sort(function(a,b){return a.date<b.date?1:-1;});}
 
+
+/* ---------- Video addome: salvati sul telefono (IndexedDB), mai pubblicati ---------- */
+var VIDS={};
+function vopen(){return new Promise(function(res,rej){try{var r=indexedDB.open("dt-media",1);r.onupgradeneeded=function(){r.result.createObjectStore("v");};r.onsuccess=function(){res(r.result);};r.onerror=function(){rej(r.error);};}catch(e){rej(e);}});}
+function vput(n,blob){return vopen().then(function(db){return new Promise(function(res,rej){var t=db.transaction("v","readwrite");t.objectStore("v").put(blob,String(n));t.oncomplete=function(){res();};t.onerror=function(){rej(t.error);};});});}
+function vget(n){return vopen().then(function(db){return new Promise(function(res,rej){var q=db.transaction("v").objectStore("v").get(String(n));q.onsuccess=function(){res(q.result||null);};q.onerror=function(){rej(q.error);};});});}
+function vlist(){return vopen().then(function(db){return new Promise(function(res){var q=db.transaction("v").objectStore("v").getAllKeys();q.onsuccess=function(){res(q.result||[]);};q.onerror=function(){res([]);};});});}
+function vinit(){vlist().then(function(ks){ks.forEach(function(k){VIDS[k]=true;});render();}).catch(function(){});}
+var PL={i:0,url:null};
+function plLabel(){var l=document.getElementById("plab");if(l)l.textContent="Addome · video "+(PL.i+1)+" di 3";}
+function plNextIdx(from){for(var k=from;k<=3;k++)if(VIDS[k])return k;return 0;}
+function plPlay(n){
+  var v=document.getElementById("pv");if(!v)return;
+  PL.i=n-1;plLabel();
+  vget(n).then(function(b){
+    if(!b){toast("Video "+n+" non trovato");return;}
+    if(PL.url)URL.revokeObjectURL(PL.url);
+    PL.url=URL.createObjectURL(b);v.src=PL.url;
+    var p=v.play();if(p&&p.catch)p.catch(function(){toast("Tocca play per partire");});
+    var pp=document.getElementById("ppp");if(pp)pp.textContent="⏸";
+  }).catch(function(){toast("Impossibile aprire il video");});
+}
+function plOpen(){
+  var first=plNextIdx(1);if(!first){toast("Carica prima i video");return;}
+  var h=document.createElement("div");h.id="player";
+  h.innerHTML='<div class="ptop"><span id="plab"></span><button data-act="p-close" aria-label="Chiudi">✕</button></div><video id="pv" playsinline webkit-playsinline></video><div class="pbar"><i id="pbar"></i></div><div class="pctl"><button data-act="p-prev" aria-label="Precedente">⏮</button><button data-act="p-toggle" id="ppp" aria-label="Pausa">⏸</button><button data-act="p-next" aria-label="Successivo">⏭</button></div>';
+  document.body.appendChild(h);
+  var v=document.getElementById("pv");
+  v.addEventListener("ended",function(){var nx=plNextIdx(PL.i+2);if(nx)plPlay(nx);else{plClose();toast("Addome completato 💪");beep();}});
+  v.addEventListener("timeupdate",function(){var b=document.getElementById("pbar");if(b&&v.duration)b.style.width=(v.currentTime/v.duration*100)+"%";});
+  v.addEventListener("click",function(){plToggle();});
+  keepAwake();plPlay(first);
+}
+function plToggle(){var v=document.getElementById("pv"),pp=document.getElementById("ppp");if(!v)return;if(v.paused){v.play();if(pp)pp.textContent="⏸";}else{v.pause();if(pp)pp.textContent="▶";}}
+function plClose(){var h=document.getElementById("player");if(h){var v=document.getElementById("pv");try{v.pause();v.removeAttribute("src");v.load();}catch(e){}h.remove();}if(PL.url){URL.revokeObjectURL(PL.url);PL.url=null;}}
+
 /* ---------- Icone ---------- */
 var IC={
  oggi:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 6.5v11M17.5 6.5v11M3.5 9v6M20.5 9v6M6.5 12h11"/></svg>',
@@ -280,6 +336,11 @@ function viewOggi(){
         h+='<div class="detail">';
         if(e.tag)h+='<span class="tag">'+esc(e.tag)+'</span>';
         if(e.note)h+='<p class="hint">'+esc(e.note)+'</p>';
+        if(e.group==="Addome"){
+          h+='<p class="hint" style="margin-top:10px">Carica una volta sola i tre video dal rullino: restano salvati nell\'app e funzionano anche senza internet.</p>';
+          [1,2,3].forEach(function(n){h+='<div class="vrow"><b>Video '+n+'</b>'+(VIDS[n]?'<span class="ok">Caricato</span>':'<span class="no">Da caricare</span>')+'<label>'+(VIDS[n]?'Cambia':'Scegli')+'<input type="file" accept="video/*" data-vid="'+n+'" hidden></label></div>';});
+          h+='<button class="btn" style="margin:14px 0 4px" data-act="abs-play">▶ Avvia allenamento addome</button>';
+        }
         if(e.group==="Cardio"){var cm=num(e.reps),run=S.timer&&S.timer.cardio&&S.timer.name===e.name;
           if(cm>0)h+='<button class="btn" style="margin:14px 0 4px" data-act="cardio" data-id="'+e.id+'">'+(run?'Ferma timer':'▶ Avvia timer · '+cm+' min')+'</button>';}
         var l=lastFor(e.id);
@@ -545,6 +606,11 @@ document.addEventListener("click",function(ev){
   if(a!=="del"&&a!=="reset"&&a!=="dellog")S.pend=null;
   if(a==="tab"){S.tab=b.dataset.v;S.pend=null;render();window.scrollTo(0,0);}
   else if(a==="day"){S.day=+b.dataset.v;S.open=null;if(S.tab==="progressi")S.tab="oggi";render();window.scrollTo(0,0);}
+  else if(a==="abs-play"){plOpen();}
+  else if(a==="p-close"){plClose();}
+  else if(a==="p-toggle"){plToggle();}
+  else if(a==="p-next"){var nx=plNextIdx(PL.i+2);if(nx)plPlay(nx);else toast("Questo è l'ultimo video");}
+  else if(a==="p-prev"){var pv0=0;for(var q=PL.i;q>=1;q--)if(VIDS[q]){pv0=q;break;}if(pv0)plPlay(pv0);}
   else if(a==="cardio"){var ce=findEx(id),cmin=num(ce.reps);if(S.timer&&S.timer.cardio&&S.timer.name===ce.name)stopTimer();else if(cmin>0)startTimer(Math.round(cmin*60),ce.name,true);render();}
   else if(a==="grp"){S.gc[b.dataset.v]=!S.gc[b.dataset.v];render();}
   else if(a==="open"){S.open=S.open===id?null:id;render();}
@@ -599,9 +665,11 @@ document.addEventListener("input",function(ev){
 document.addEventListener("change",function(ev){
   var t=ev.target;
   if(t.dataset.sel==="prog"){S.prog=t.value;render();}
+  if(t.dataset.vid&&t.files&&t.files[0]){var vn=+t.dataset.vid;toast("Salvo il video "+vn+"…");vput(vn,t.files[0]).then(function(){VIDS[vn]=true;toast("Video "+vn+" salvato");render();}).catch(function(){toast("Salvataggio non riuscito: poco spazio?");});}
 });
 
 render();
+vinit();
 
 /* ---------- Sync con il database (solo nella versione su claude.ai) ---------- */
 function initDb(){
