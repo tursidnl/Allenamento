@@ -41,6 +41,7 @@ body{
 .stat-dot.off i{background:#FF9F0A}
 h1{font-size:46px;line-height:1.02;font-weight:800;letter-spacing:-.035em;margin:10px 0 4px}
 .sub{font-size:17px;color:var(--fg2);margin:0}
+.sub.dsub{font-size:34px;line-height:1.05;font-weight:800;letter-spacing:-.035em;color:var(--fg);margin-top:2px}
 .facts{display:flex;align-items:center;gap:10px;margin:14px 0 22px;font-size:14px;color:var(--fg2);font-variant-numeric:tabular-nums}
 .facts i{width:3px;height:3px;border-radius:50%;background:var(--fg3)}
 
@@ -49,7 +50,7 @@ h1{font-size:46px;line-height:1.02;font-weight:800;letter-spacing:-.035em;margin
 .chip{flex:none;border:.5px solid var(--line);background:var(--glass);color:var(--fg2);font:600 14px var(--font);padding:9px 18px;border-radius:99px;-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);transition:background .2s,color .2s}
 .chip.on{background:var(--fg);color:#0A0A0C;border-color:transparent}
 
-.glabel{display:flex;align-items:center;gap:12px;margin:34px 2px 12px;font-size:36px;line-height:1.02;font-weight:800;letter-spacing:-.035em;color:var(--fg)}
+.glabel{display:flex;align-items:center;gap:12px;margin:30px 2px 12px;font-size:26px;line-height:1.02;font-weight:800;letter-spacing:-.035em;color:var(--fg)}
 .glabel i{width:12px;height:12px;border-radius:50%;flex:none}
 .stack{display:grid;gap:8px}
 .ex{border-radius:22px;overflow:hidden}
@@ -245,7 +246,7 @@ function viewOggi(){
   var d=curDay(),tint=tintOf(S.day);
   var nsets=d.exercises.reduce(function(a,e){return a+e.sets;},0);
   var h='<h1 style="margin-top:22px">'+esc(d.name)+'</h1>';
-  h+='<div class="eyebrow" style="margin:6px 0 8px"><span>'+new Date().toLocaleDateString("it-IT",{weekday:"long",day:"numeric",month:"long"})+'</span>'+statusDot()+'</div><p class="sub">'+esc(d.sub)+'</p>';
+  h+='<div class="eyebrow" style="margin:6px 0 8px"><span>'+new Date().toLocaleDateString("it-IT",{weekday:"long",day:"numeric",month:"long"})+'</span>'+statusDot()+'</div><p class="sub dsub">'+esc(d.sub)+'</p>';
   h+='<div class="facts"><span>'+d.exercises.length+' esercizi</span><i></i><span>'+nsets+' serie</span><i></i><span>circa '+estMinutes(d)+' min</span></div>';
   h+=chips();
   d.groups.forEach(function(g){
