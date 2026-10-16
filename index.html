@@ -707,20 +707,34 @@ function wavUri(){
   var bin="";for(var k=0;k<buf.length;k++)bin+=String.fromCharCode(buf[k]);
   return "data:audio/wav;base64,"+btoa(bin);
 }
+function silentUri(){
+  var sr=8000,n=400,buf=new Uint8Array(44+n*2),dv=new DataView(buf.buffer);
+  function w(o,t){for(var i=0;i<t.length;i++)buf[o+i]=t.charCodeAt(i);}
+  w(0,"RIFF");dv.setUint32(4,36+n*2,true);w(8,"WAVEfmt ");dv.setUint32(16,16,true);dv.setUint16(20,1,true);dv.setUint16(22,1,true);
+  dv.setUint32(24,sr,true);dv.setUint32(28,sr*2,true);dv.setUint16(32,2,true);dv.setUint16(34,16,true);w(36,"data");dv.setUint32(40,n*2,true);
+  var bin="";for(var k=0;k<buf.length;k++)bin+=String.fromCharCode(buf[k]);
+  return "data:audio/wav;base64,"+btoa(bin);
+}
+function playbackSession(){try{if(navigator.audioSession)navigator.audioSession.type="playback";}catch(e){}}
+function unlockEl(el,after){
+  /* iOS sblocca un elemento audio solo con una riproduzione vera (non muta) dentro un tocco: uso un clip silenzioso */
+  try{el.src=silentUri();el.preload="auto";el.muted=false;
+    var p=el.play();
+    var done=function(){if(after)after();};
+    if(p&&p.then)p.then(function(){setTimeout(done,120);}).catch(function(){el.dataset.fail="1";});
+    else setTimeout(done,120);
+  }catch(e){el.dataset.fail="1";}
+}
 function unlockAudio(){
-  try{if(!AC){var C=window.AudioContext||window.webkitAudioContext;if(C)AC=new C();}if(AC&&AC.state==="suspended")AC.resume();}catch(e){}
+  playbackSession();
+  try{if(!AC){var C=window.AudioContext||window.webkitAudioContext;if(C)AC=new C();}if(AC&&AC.state!=="running")AC.resume();}catch(e){}
   try{
-    if(!timerEl){
-      timerEl=new Audio();timerEl.preload="auto";
-      timerEl.src=URL.createObjectURL(timerBlob(0.05));timerEl.muted=true;
-      var tp=timerEl.play();if(tp&&tp.then)tp.then(function(){timerEl.pause();timerEl.currentTime=0;timerEl.muted=false;}).catch(function(){timerEl.muted=false;});
-    }
+    if(!timerEl){timerEl=new Audio();unlockEl(timerEl,null);}
+    else if(timerEl.dataset.fail){delete timerEl.dataset.fail;unlockEl(timerEl,null);}
   }catch(e){}
   try{
-    if(!chimeEl){chimeEl=new Audio(wavUri());chimeEl.preload="auto";chimeEl.volume=1;chimeEl.dataset.ready="0";
-      chimeEl.muted=true;var p=chimeEl.play();
-      if(p&&p.then)p.then(function(){chimeEl.pause();chimeEl.currentTime=0;chimeEl.muted=false;chimeEl.dataset.ready="1";}).catch(function(){chimeEl.muted=false;});
-    }
+    if(!chimeEl){chimeEl=new Audio();chimeEl.dataset.ready="0";unlockEl(chimeEl,function(){chimeEl.src=wavUri();chimeEl.load();chimeEl.dataset.ready="1";});}
+    else if(chimeEl.dataset.fail){delete chimeEl.dataset.fail;unlockEl(chimeEl,function(){chimeEl.src=wavUri();chimeEl.load();chimeEl.dataset.ready="1";});}
   }catch(e){}
 }
 function webBeep(){
@@ -778,11 +792,17 @@ function finish(){
 }
 function mutPlan(id,fn){var e=findEx(id);if(e){fn(e);savePlan();}}
 
+playbackSession();
 document.addEventListener("click",function(ev){
   var b=ev.target.closest("[data-act]");if(!b)return;
   var a=b.dataset.act,id=b.dataset.id,d=curDay();
   unlockAudio();
-  if(a==="testsound"){beep();toast("Se non senti nulla: alza il volume e controlla la levetta del silenzioso");return;}
+  if(a==="testsound"){
+    toast("Suono 1 di 2…");
+    try{if(chimeEl&&chimeEl.dataset.ready==="1"){chimeEl.currentTime=0;var tp1=chimeEl.play();if(tp1&&tp1.catch)tp1.catch(function(er){toast("Suono 1 non partito: "+(er&&er.name||"errore"));});}else toast("Suono 1 non pronto, riprova");}catch(e){toast("Suono 1 errore");}
+    setTimeout(function(){toast("Suono 2 di 2…");try{if(AC&&AC.state!=="running")AC.resume();}catch(e){}webBeep();},4500);
+    setTimeout(function(){toast("Dimmi quale hai sentito: il 1, il 2, entrambi o nessuno");},9000);
+    return;}
   if(a==="backup"){
     var txt=JSON.stringify({v:1,plan:S.plan,logs:S.logs,fb:FB});
     var done=function(){toast("Backup copiato");};
