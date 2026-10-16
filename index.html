@@ -392,22 +392,28 @@ function drawTimer(){
 }
 /* Suono di fine recupero: sbloccato al primo tocco (richiesto da iPhone), suona anche con le cuffie. */
 var AC=null,chimeEl=null,wake=null;
+/* Campanella morbida: note con parziali che decadono, arpeggio ascendente ripetuto due volte. */
+var CHIME=[[784,0],[1047,.16],[1319,.32],[784,1.35],[1047,1.51],[1319,1.67]];
+var PART=[[1,1,3.2],[2,.32,5],[3,.12,7],[4.2,.07,9]];
 function wavUri(){
-  var sr=22050,parts=[[880,.16],[0,.07],[880,.16],[0,.07],[1175,.42],[0,.35],[880,.16],[0,.07],[880,.16],[0,.07],[1175,.42]];
-  var n=0;parts.forEach(function(p){n+=Math.round(p[1]*sr);});
+  var sr=32000,dur=3.6,n=Math.round(sr*dur),f=new Float32Array(n);
+  CHIME.forEach(function(c){
+    var st=Math.round(c[1]*sr);
+    PART.forEach(function(p){
+      var fr=c[0]*p[0],amp=p[1]*.34;
+      for(var i=0;st+i<n;i++){
+        var t=i/sr,env=Math.min(1,i/(sr*.004))*Math.exp(-t*p[2]);
+        if(env<.0004)break;
+        f[st+i]+=Math.sin(2*Math.PI*fr*t)*amp*env;
+      }
+    });
+  });
   var buf=new Uint8Array(44+n*2),dv=new DataView(buf.buffer);
   function w(o,s){for(var i=0;i<s.length;i++)buf[o+i]=s.charCodeAt(i);}
   w(0,"RIFF");dv.setUint32(4,36+n*2,true);w(8,"WAVEfmt ");dv.setUint32(16,16,true);dv.setUint16(20,1,true);dv.setUint16(22,1,true);
   dv.setUint32(24,sr,true);dv.setUint32(28,sr*2,true);dv.setUint16(32,2,true);dv.setUint16(34,16,true);w(36,"data");dv.setUint32(40,n*2,true);
   var o=44;
-  parts.forEach(function(p){
-    var len=Math.round(p[1]*sr);
-    for(var i=0;i<len;i++){
-      var env=Math.min(1,i/200)*Math.min(1,(len-i)/400);
-      var v=p[0]?Math.sin(2*Math.PI*p[0]*i/sr)*env*0.9:0;
-      dv.setInt16(o,Math.round(v*32767),true);o+=2;
-    }
-  });
+  for(var i=0;i<n;i++){var v=Math.max(-1,Math.min(1,f[i]));dv.setInt16(o,Math.round(v*32767),true);o+=2;}
   var bin="";for(var k=0;k<buf.length;k++)bin+=String.fromCharCode(buf[k]);
   return "data:audio/wav;base64,"+btoa(bin);
 }
@@ -423,9 +429,11 @@ function unlockAudio(){
 function webBeep(){
   try{
     if(!AC)return;var t=AC.currentTime;
-    [[880,0],[880,.23],[1175,.46],[880,1.2],[880,1.43],[1175,1.66]].forEach(function(x){
-      var o=AC.createOscillator(),g=AC.createGain();o.type="sine";o.frequency.value=x[0];o.connect(g);g.connect(AC.destination);
-      var s=t+x[1];g.gain.setValueAtTime(0,s);g.gain.linearRampToValueAtTime(.5,s+.02);g.gain.exponentialRampToValueAtTime(.001,s+(x[0]===1175?.4:.16));o.start(s);o.stop(s+.45);
+    CHIME.forEach(function(c){
+      PART.forEach(function(p){
+        var o=AC.createOscillator(),g=AC.createGain();o.type="sine";o.frequency.value=c[0]*p[0];o.connect(g);g.connect(AC.destination);
+        var s=t+c[1],pk=p[1]*.34;g.gain.setValueAtTime(0,s);g.gain.linearRampToValueAtTime(pk,s+.004);g.gain.exponentialRampToValueAtTime(.0005,s+Math.min(1.6,6/p[2]));o.start(s);o.stop(s+1.7);
+      });
     });
   }catch(e){}
 }
@@ -433,7 +441,7 @@ function beep(){
   var played=false;
   try{if(chimeEl&&chimeEl.dataset.ready==="1"){chimeEl.currentTime=0;var p=chimeEl.play();played=true;if(p&&p.catch)p.catch(webBeep);}}catch(e){}
   if(!played)webBeep();
-  try{if(navigator.vibrate)navigator.vibrate([200,80,200,80,400]);}catch(e){}
+  try{if(navigator.vibrate)navigator.vibrate([120,60,120,60,250]);}catch(e){}
 }
 function keepAwake(){
   try{if(navigator.wakeLock&&!wake){navigator.wakeLock.request("screen").then(function(l){wake=l;l.addEventListener("release",function(){wake=null;});}).catch(function(){});}}catch(e){}
