@@ -622,7 +622,7 @@ document.addEventListener("click",function(ev){
   else if(a==="chk"){
     var e=findEx(id),sets=setsFor(d,e),i=+b.dataset.i;
     sets[i].done=!sets[i].done;saveDraft();
-    if(sets[i].done&&sets.every(function(x){return x.done;}))markStart();
+    if(sets[i].done)markStart();
     if(sets[i].done&&i<sets.length-1)startTimer(e.rest,e.name);
     else if(sets[i].done){stopTimer();}
     render();
