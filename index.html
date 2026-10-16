@@ -403,12 +403,29 @@ function render(){
 
 /* ---------- Timer di recupero ---------- */
 var tiv=null;
+/* Loop quasi muto: tiene viva l'app (e il timer) anche con schermo bloccato o app in secondo piano su iPhone. */
+var keepEl=null;
+function keepAliveOn(){
+  try{
+    if(!keepEl){
+      var sr=8000,n=sr,buf=new Uint8Array(44+n*2),dv=new DataView(buf.buffer);
+      function w(o,t){for(var i=0;i<t.length;i++)buf[o+i]=t.charCodeAt(i);}
+      w(0,"RIFF");dv.setUint32(4,36+n*2,true);w(8,"WAVEfmt ");dv.setUint32(16,16,true);dv.setUint16(20,1,true);dv.setUint16(22,1,true);
+      dv.setUint32(24,sr,true);dv.setUint32(28,sr*2,true);dv.setUint16(32,2,true);dv.setUint16(34,16,true);w(36,"data");dv.setUint32(40,n*2,true);
+      for(var i=0;i<n;i++)dv.setInt16(44+i*2,i%2?2:-2,true);
+      var bin="";for(var k=0;k<buf.length;k++)bin+=String.fromCharCode(buf[k]);
+      keepEl=new Audio("data:audio/wav;base64,"+btoa(bin));keepEl.loop=true;keepEl.volume=.05;
+    }
+    var p=keepEl.play();if(p&&p.catch)p.catch(function(){});
+  }catch(e){}
+}
+function keepAliveOff(){try{if(keepEl)keepEl.pause();}catch(e){}}
 function startTimer(sec,name,cardio){
-  keepAwake();
+  keepAwake();keepAliveOn();
   S.timer={end:Date.now()+sec*1000,total:sec*1000,name:name,fired:false,cardio:!!cardio};
   clearInterval(tiv);tiv=setInterval(tick,250);drawTimer();
 }
-function stopTimer(){S.timer=null;clearInterval(tiv);document.getElementById("timerhost").innerHTML="";}
+function stopTimer(){keepAliveOff();S.timer=null;clearInterval(tiv);document.getElementById("timerhost").innerHTML="";}
 function fmtClock(left){return Math.floor(left/60)+":"+("0"+left%60).slice(-2);}
 function drawTimer(){
   var t=S.timer,host=document.getElementById("timerhost");
