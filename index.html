@@ -254,7 +254,7 @@ function viewOggi(){
   var d=curDay(),tint=tintOf(S.day);
   var nsets=d.exercises.reduce(function(a,e){return a+e.sets;},0);
   var h='<h1 style="margin-top:22px">'+esc(d.name)+'</h1>';
-  h+='<div class="eyebrow" style="margin:6px 0 8px"><span>'+new Date().toLocaleDateString("it-IT",{weekday:"long",day:"numeric",month:"long"})+'</span>'+statusDot()+'</div><p class="sub dsub">'+esc(d.sub)+'</p>';
+  h+='<div class="eyebrow" style="margin:6px 0 8px"><span>'+new Date().toLocaleDateString("it-IT",{weekday:"long",day:"numeric",month:"long"})+'</span>'+statusDot()+'</div>';
   h+='<div class="facts"><span>'+d.exercises.length+' esercizi</span><i></i><span>'+nsets+' serie</span><i></i><span>circa '+estMinutes(d)+' min</span></div>';
   h+=chips();
   d.groups.forEach(function(g){
