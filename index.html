@@ -49,7 +49,7 @@ h1{font-size:46px;line-height:1.02;font-weight:800;letter-spacing:-.035em;margin
 .chip{flex:none;border:.5px solid var(--line);background:var(--glass);color:var(--fg2);font:600 14px var(--font);padding:9px 18px;border-radius:99px;-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);transition:background .2s,color .2s}
 .chip.on{background:var(--fg);color:#0A0A0C;border-color:transparent}
 
-.glabel{display:flex;align-items:center;gap:12px;margin:32px 2px 12px;font-size:28px;line-height:1;font-weight:800;letter-spacing:.02em;text-transform:uppercase;color:var(--fg)}
+.glabel{display:flex;align-items:center;gap:12px;margin:34px 2px 12px;font-size:36px;line-height:1.02;font-weight:800;letter-spacing:-.035em;color:var(--fg)}
 .glabel i{width:12px;height:12px;border-radius:50%;flex:none}
 .stack{display:grid;gap:8px}
 .ex{border-radius:22px;overflow:hidden}
@@ -75,7 +75,7 @@ input:focus,select:focus,textarea:focus{outline:1.5px solid rgba(255,255,255,.5)
 .chk.on{background:var(--tint);border-color:var(--tint);color:#09090B}
 .chk svg{width:17px;height:17px}
 
-.cta{position:fixed;left:0;right:0;z-index:25;bottom:calc(62px + env(safe-area-inset-bottom,0px)*.4);display:flex;justify-content:center;pointer-events:none}
+.cta{position:fixed;left:0;right:0;z-index:25;bottom:calc(73px + env(safe-area-inset-bottom,0px)*.4);display:flex;justify-content:center;pointer-events:none}
 .cta button{pointer-events:auto;border:0;background:var(--fg);color:#0A0A0C;font:700 16px var(--font);letter-spacing:-.01em;padding:15px 30px;border-radius:99px;box-shadow:0 10px 36px rgba(0,0,0,.55)}
 .btn{display:block;width:100%;border:0;border-radius:99px;padding:16px;font:700 16px var(--font);background:var(--fg);color:#0A0A0C;margin-top:22px}
 .btn.sec{background:var(--glass2);color:var(--fg);font-weight:600}
@@ -108,7 +108,7 @@ textarea{font-size:13px;font-family:ui-monospace,Menlo,monospace;text-align:left
 
 .tabs{
   position:fixed;left:0;right:0;bottom:0;z-index:30;display:flex;justify-content:space-around;
-  padding:30px 12px calc(env(safe-area-inset-bottom,0px)*.4);
+  padding:30px 12px calc(11px + env(safe-area-inset-bottom,0px)*.4);
   background:linear-gradient(to top,rgba(0,0,0,.98) 0%,rgba(0,0,0,.96) 55%,rgba(0,0,0,.7) 78%,rgba(0,0,0,0) 100%);
   pointer-events:none
 }
@@ -244,8 +244,8 @@ function estMinutes(d){var s=0;d.exercises.forEach(function(e){s+=e.sets*(e.rest
 function viewOggi(){
   var d=curDay(),tint=tintOf(S.day);
   var nsets=d.exercises.reduce(function(a,e){return a+e.sets;},0);
-  var h='<div class="eyebrow"><span>'+new Date().toLocaleDateString("it-IT",{weekday:"long",day:"numeric",month:"long"})+'</span>'+statusDot()+'</div>';
-  h+='<h1>'+esc(d.name)+'</h1><p class="sub">'+esc(d.sub)+'</p>';
+  var h='<h1 style="margin-top:22px">'+esc(d.name)+'</h1>';
+  h+='<div class="eyebrow" style="margin:6px 0 8px"><span>'+new Date().toLocaleDateString("it-IT",{weekday:"long",day:"numeric",month:"long"})+'</span>'+statusDot()+'</div><p class="sub">'+esc(d.sub)+'</p>';
   h+='<div class="facts"><span>'+d.exercises.length+' esercizi</span><i></i><span>'+nsets+' serie</span><i></i><span>circa '+estMinutes(d)+' min</span></div>';
   h+=chips();
   d.groups.forEach(function(g){
