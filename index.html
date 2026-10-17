@@ -306,18 +306,33 @@ function vget(n){return vopen().then(function(db){return new Promise(function(re
 function vlist(){return vopen().then(function(db){return new Promise(function(res){var q=db.transaction("v").objectStore("v").getAllKeys();q.onsuccess=function(){res(q.result||[]);};q.onerror=function(){res([]);};});});}
 function vBlob(v){if(!v)return null;if(v.buf)return new Blob([v.buf],{type:v.type||"video/mp4"});return v;}
 function vOk(v){return !!(v&&((v.buf&&v.buf.byteLength>0)||v.size>0));}
+var VCACHE="media-videos";
+function vGetAny(n){
+  /* prima la Cache dell'app (adatta ai file grandi), poi il vecchio archivio */
+  return (window.caches?caches.open(VCACHE).then(function(c){return c.match("video-"+n);}).then(function(r){return r?r.blob():null;}):Promise.resolve(null))
+    .catch(function(){return null;})
+    .then(function(b){return (b&&b.size>0)?b:vget(n).catch(function(){return null;});});
+}
 function vinit(){
   try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist();}catch(e){}
-  [1,2,3].forEach(function(n){vget(n).then(function(v){if(vOk(v)){VIDS[n]=true;render();}}).catch(function(){});});
+  [1,2,3].forEach(function(n){vGetAny(n).then(function(v){if(vOk(v)){VIDS[n]=true;render();}}).catch(function(){});});
 }
+function errTxt(e){return e?((e.name||"Errore")+(e.message?": "+e.message:"")):"errore sconosciuto";}
 function vSave(n,file){
   /* copia vera dei byte nell'app: non dipende piu dal file nella galleria */
-  return new Promise(function(res,rej){
-    var fr=new FileReader();
-    fr.onload=function(){vput(n,{buf:fr.result,type:file.type||"video/mp4"}).then(res).catch(rej);};
-    fr.onerror=function(){rej(fr.error);};
-    fr.readAsArrayBuffer(file);
-  });
+  var viaCache=function(){
+    if(!window.caches)return Promise.reject(new Error("Cache non disponibile"));
+    return caches.open(VCACHE).then(function(c){return c.put("video-"+n,new Response(file,{headers:{"Content-Type":file.type||"video/mp4"}}));});
+  };
+  var viaIdb=function(){
+    return new Promise(function(res,rej){
+      var fr=new FileReader();
+      fr.onload=function(){vput(n,{buf:fr.result,type:file.type||"video/mp4"}).then(res).catch(rej);};
+      fr.onerror=function(){rej(fr.error);};
+      fr.readAsArrayBuffer(file);
+    });
+  };
+  return viaCache().catch(function(e1){return viaIdb().catch(function(e2){throw new Error(errTxt(e1)+" / "+errTxt(e2));});});
 }
 var PL={i:0,url:null};
 function plLabel(){var l=document.getElementById("plab");if(l)l.textContent="Addome · video "+(PL.i+1)+" di 3";}
@@ -325,7 +340,7 @@ function plNextIdx(from){for(var k=from;k<=3;k++)if(VIDS[k])return k;return 0;}
 function plPlay(n){
   var v=document.getElementById("pv");if(!v)return;
   PL.i=n-1;plLabel();
-  vget(n).then(function(b){
+  vGetAny(n).then(function(b){
     if(!b){toast("Video "+n+" non trovato");return;}
     if(PL.url)URL.revokeObjectURL(PL.url);
     PL.url=URL.createObjectURL(vBlob(b));v.src=PL.url;
@@ -905,7 +920,7 @@ document.addEventListener("input",function(ev){
 document.addEventListener("change",function(ev){
   var t=ev.target;
   if(t.dataset.sel==="prog"){S.prog=t.value;render();}
-  if(t.dataset.vid&&t.files&&t.files[0]){var vn=+t.dataset.vid;toast("Salvo il video "+vn+"…");vSave(vn,t.files[0]).then(function(){VIDS[vn]=true;toast("Video "+vn+" salvato");render();}).catch(function(){toast("Salvataggio non riuscito: poco spazio?");});}
+  if(t.dataset.vid&&t.files&&t.files[0]){var vn=+t.dataset.vid;toast("Salvo il video "+vn+"…");vSave(vn,t.files[0]).then(function(){VIDS[vn]=true;toast("Video "+vn+" salvato");render();}).catch(function(er){toast("Salvataggio non riuscito ("+errTxt(er)+")");});}
 });
 
 render();
