@@ -304,7 +304,21 @@ function vopen(){return new Promise(function(res,rej){try{var r=indexedDB.open("
 function vput(n,blob){return vopen().then(function(db){return new Promise(function(res,rej){var t=db.transaction("v","readwrite");t.objectStore("v").put(blob,String(n));t.oncomplete=function(){res();};t.onerror=function(){rej(t.error);};});});}
 function vget(n){return vopen().then(function(db){return new Promise(function(res,rej){var q=db.transaction("v").objectStore("v").get(String(n));q.onsuccess=function(){res(q.result||null);};q.onerror=function(){rej(q.error);};});});}
 function vlist(){return vopen().then(function(db){return new Promise(function(res){var q=db.transaction("v").objectStore("v").getAllKeys();q.onsuccess=function(){res(q.result||[]);};q.onerror=function(){res([]);};});});}
-function vinit(){vlist().then(function(ks){ks.forEach(function(k){VIDS[k]=true;});render();}).catch(function(){});}
+function vBlob(v){if(!v)return null;if(v.buf)return new Blob([v.buf],{type:v.type||"video/mp4"});return v;}
+function vOk(v){return !!(v&&((v.buf&&v.buf.byteLength>0)||v.size>0));}
+function vinit(){
+  try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist();}catch(e){}
+  [1,2,3].forEach(function(n){vget(n).then(function(v){if(vOk(v)){VIDS[n]=true;render();}}).catch(function(){});});
+}
+function vSave(n,file){
+  /* copia vera dei byte nell'app: non dipende piu dal file nella galleria */
+  return new Promise(function(res,rej){
+    var fr=new FileReader();
+    fr.onload=function(){vput(n,{buf:fr.result,type:file.type||"video/mp4"}).then(res).catch(rej);};
+    fr.onerror=function(){rej(fr.error);};
+    fr.readAsArrayBuffer(file);
+  });
+}
 var PL={i:0,url:null};
 function plLabel(){var l=document.getElementById("plab");if(l)l.textContent="Addome · video "+(PL.i+1)+" di 3";}
 function plNextIdx(from){for(var k=from;k<=3;k++)if(VIDS[k])return k;return 0;}
@@ -314,7 +328,7 @@ function plPlay(n){
   vget(n).then(function(b){
     if(!b){toast("Video "+n+" non trovato");return;}
     if(PL.url)URL.revokeObjectURL(PL.url);
-    PL.url=URL.createObjectURL(b);v.src=PL.url;
+    PL.url=URL.createObjectURL(vBlob(b));v.src=PL.url;
     var p=v.play();if(p&&p.catch)p.catch(function(){toast("Tocca play per partire");});
     var pp=document.getElementById("ppp");if(pp)pp.textContent="⏸";
   }).catch(function(){toast("Impossibile aprire il video");});
@@ -499,7 +513,7 @@ function viewOggi(){
         if(e.tag)h+='<span class="tag">'+esc(e.tag)+'</span>';
         if(e.note)h+='<p class="hint">'+esc(e.note)+'</p>';
         if(e.group==="Addome"){
-          h+='<p class="hint" style="margin-top:10px">Carica una volta sola i tre video dal rullino: restano salvati nell\'app e funzionano anche senza internet.</p>';
+          h+='<p class="hint" style="margin-top:10px">Carica una volta sola i tre video dal rullino: restano salvati nell\'app e funzionano anche senza internet. Non eliminare l\'icona dalla Home: cancellerebbe anche i video.</p>';
           [1,2,3].forEach(function(n){h+='<div class="vrow"><b>Video '+n+'</b>'+(VIDS[n]?'<span class="ok">Caricato</span>':'<span class="no">Da caricare</span>')+'<label>'+(VIDS[n]?'Cambia':'Scegli')+'<input type="file" accept="video/*" data-vid="'+n+'" hidden></label></div>';});
           h+='<button class="btn" style="margin:14px 0 4px" data-act="abs-play">▶ Avvia allenamento addome</button>';
         }
@@ -891,7 +905,7 @@ document.addEventListener("input",function(ev){
 document.addEventListener("change",function(ev){
   var t=ev.target;
   if(t.dataset.sel==="prog"){S.prog=t.value;render();}
-  if(t.dataset.vid&&t.files&&t.files[0]){var vn=+t.dataset.vid;toast("Salvo il video "+vn+"…");vput(vn,t.files[0]).then(function(){VIDS[vn]=true;toast("Video "+vn+" salvato");render();}).catch(function(){toast("Salvataggio non riuscito: poco spazio?");});}
+  if(t.dataset.vid&&t.files&&t.files[0]){var vn=+t.dataset.vid;toast("Salvo il video "+vn+"…");vSave(vn,t.files[0]).then(function(){VIDS[vn]=true;toast("Video "+vn+" salvato");render();}).catch(function(){toast("Salvataggio non riuscito: poco spazio?");});}
 });
 
 render();
