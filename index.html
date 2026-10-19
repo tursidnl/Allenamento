@@ -168,6 +168,8 @@ textarea{font-size:13px;font-family:ui-monospace,Menlo,monospace;text-align:left
 .cchat{margin-top:12px;padding-top:12px;border-top:.5px solid var(--line)}
 .cq{font-weight:600;color:var(--fg)!important}
 .copt{display:block;width:100%;text-align:left;border:0;border-radius:12px;background:var(--glass2);color:var(--fg);font:500 14px var(--font);padding:12px 14px;margin:8px 0 0}
+.glabel .gdone{margin-left:auto;display:inline-flex;align-items:center;gap:5px;font-size:13px;font-weight:700;letter-spacing:0;color:#30D158;background:rgba(48,209,88,.14);border-radius:99px;padding:4px 10px 4px 8px}
+.glabel .gdone svg{width:14px;height:14px}
 </style>
 </head>
 <body>
@@ -187,7 +189,7 @@ var G={gambe:"#30D158",spalle:"#FFB340",polpacci:"#40D6C4",dorsali:"#4DA3FF",tri
 var TINT=["#30D158","#4DA3FF","#FF7A4D"];
 function ex(id,name,group,sets,reps,load,unit,rest,note,tag){return{id:id,name:name,group:group,sets:sets,reps:reps,load:load,unit:unit,rest:rest,note:note||"",tag:tag||""};}
 var DEFAULT_PLAN=[
- {id:"d1",name:"Giorno 1",sub:"Gambe · Spalle",groups:[{name:"Cardio",color:G.cardio},{name:"Gambe",color:G.gambe},{name:"Spalle",color:G.spalle},{name:"Polpacci",color:G.polpacci}],exercises:[
+ {id:"d1",name:"Giorno 1",sub:"Gambe · Spalle",groups:[{name:"Cardio",color:G.cardio},{name:"Polpacci",color:G.polpacci},{name:"Spalle",color:G.spalle},{name:"Gambe",color:G.gambe}],exercises:[
   ex("ec1","Cardio","Cardio",1,"5 min","6,5","km/h",0,"Cardio a velocità sostenuta, 5 minuti."),
   ex("e1","Pressa 45°","Gambe",4,"8","120","kg",120,"Circa l'85% del tuo 140×4."),
   ex("e2","Stacchi gambe tese","Gambe",3,"8","50","kg tot.",120,"Multipower, schiena neutra. Parti leggero e sali."),
@@ -235,6 +237,10 @@ function migrate(plan){
       if(dd&&src&&dd.id===src.id&&!dd.groups.some(function(g){return g.name==="Addome";})){
         dd.groups.push({name:"Addome",color:G.addome});
         dd.exercises.push(clone(src.exercises[src.exercises.length-1]));
+      }
+      if(dd&&dd.id==="d1"&&dd.groups){
+        var ord=["Cardio","Polpacci","Spalle","Gambe"];
+        dd.groups.sort(function(x,y){var a=ord.indexOf(x.name),b=ord.indexOf(y.name);return (a<0?99:a)-(b<0?99:b);});
       }
       if(dd&&dd.groups&&dd.groups.length&&dd.groups[0].name!=="Addome"){
         var ai=-1;dd.groups.forEach(function(g,k){if(g.name==="Addome")ai=k;});
@@ -503,9 +509,9 @@ function chips(){return '<div class="chips" style="margin:0 0 6px">'+S.plan.map(
 function statusDot(){return '';var _x='<span class="stat-dot'+(S.syncOn?"":" off")+'"><i></i>'+(S.syncOn?"Sincronizzato":"Su questo dispositivo")+'</span>';}
 function estMinutes(d){var s=0;d.exercises.forEach(function(e){s+=e.sets*(e.rest+40);});return Math.round(s/60/5)*5;}
 
-function glabel(d,g,n){
+function glabel(d,g,n,done){
   var k=S.day+":"+g.name,shut=!S.gc[k];
-  return '<button class="glabel'+(shut?' shut':'')+'" data-act="grp" data-v="'+esc(k)+'" aria-expanded="'+(!shut)+'"><i style="background:'+g.color+'"></i>'+esc(g.name)+'<span class="gcount">'+n+(n===1?' esercizio':' esercizi')+'</span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></button>';
+  return '<button class="glabel'+(shut?' shut':'')+'" data-act="grp" data-v="'+esc(k)+'" aria-expanded="'+(!shut)+'"><i style="background:'+g.color+'"></i>'+esc(g.name)+(done?'<span class="gdone"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Completo</span>':'<span class="gcount">'+n+(n===1?' esercizio':' esercizi')+'</span>')+'<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></button>';
 }
 function viewOggi(){
   var d=curDay(),tint=tintOf(S.day);
@@ -517,7 +523,8 @@ function viewOggi(){
   d.groups.forEach(function(g){
     var exs=d.exercises.filter(function(e){return e.group===g.name;}),total=exs.length;
     if(!exs.length)return;
-    h+=glabel(d,g,total)+'<div class="stack">';
+    var gdone=exs.every(function(e){var st=setsFor(d,e);return st.length>0&&st.every(function(x){return x.done;});});
+    h+=glabel(d,g,total,gdone)+'<div class="stack">';
     if(!S.gc[S.day+":"+g.name])exs=[];
     exs.forEach(function(e){
       var sets=setsFor(d,e),done=sets.filter(function(s){return s.done;}).length,open=S.open===e.id;
