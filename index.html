@@ -232,15 +232,16 @@ function migrate(plan){
       d.groups.unshift({name:"Cardio",color:G.cardio});
       d.exercises.unshift(clone(DEFAULT_PLAN[0].exercises[0]));
     }
+    var d1=plan&&plan[0];
+    if(d1&&d1.id==="d1"&&d1.groups){
+      var ord=["Cardio","Polpacci","Spalle","Gambe"];
+      d1.groups.sort(function(x,y){var a=ord.indexOf(x.name),b=ord.indexOf(y.name);return (a<0?99:a)-(b<0?99:b);});
+    }
     [1,2].forEach(function(ix){
       var dd=plan&&plan[ix],src=DEFAULT_PLAN[ix];
       if(dd&&src&&dd.id===src.id&&!dd.groups.some(function(g){return g.name==="Addome";})){
         dd.groups.push({name:"Addome",color:G.addome});
         dd.exercises.push(clone(src.exercises[src.exercises.length-1]));
-      }
-      if(dd&&dd.id==="d1"&&dd.groups){
-        var ord=["Cardio","Polpacci","Spalle","Gambe"];
-        dd.groups.sort(function(x,y){var a=ord.indexOf(x.name),b=ord.indexOf(y.name);return (a<0?99:a)-(b<0?99:b);});
       }
       if(dd&&dd.groups&&dd.groups.length&&dd.groups[0].name!=="Addome"){
         var ai=-1;dd.groups.forEach(function(g,k){if(g.name==="Addome")ai=k;});
@@ -556,7 +557,7 @@ function viewOggi(){
     });
     h+='</div>';
   });
-  h+='<div style="text-align:center;margin-top:26px"><button class="link" data-act="testsound">Prova il suono di fine recupero</button><br><button class="link" data-act="testtimer">Prova un timer da 5 secondi</button></div>';
+  h+='<div style="text-align:center;margin-top:26px"><button class="link" data-act="testsound">Prova il suono di fine recupero</button><br><button class="link" data-act="testtimer">Prova un timer da 5 secondi</button><div style="font-size:11px;color:var(--fg3);margin-top:8px">Versione 44</div></div>';
   return h;
 }
 

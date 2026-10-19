@@ -1,4 +1,4 @@
-const V="dt-v43";
+const V="dt-v44";
 const FILES=["./","./index.html","./manifest.webmanifest","./icon3-192.png","./icon3-512.png","./apple-icon3.png","./bg-d1.jpg","./bg-d2.jpg","./bg-d3.jpg","./bg-n.jpg"];
 self.addEventListener("install",e=>{e.waitUntil(caches.open(V).then(c=>c.addAll(FILES)).then(()=>self.skipWaiting()));});
 self.addEventListener("activate",e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==V&&/^dt-v\d+$/.test(k)).map(k=>caches.delete(k)))).then(()=>self.clients.claim()));});
