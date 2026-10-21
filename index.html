@@ -204,8 +204,7 @@ var DEFAULT_PLAN=[
   ex("e10","Lat machine","Dorsali",2,"10","30","",90,"Maniglia."),
   ex("e11","T-bar","Dorsali",3,"8","35","",120),
   ex("e12","Rematore al petto","Dorsali",3,"8+8","50","",120,""),
-  ex("e13","Pushdown barra corta ai cavi","Tricipiti",2,"10","20","",60,"Gomiti fermi."),
-  ex("e14","Tricipiti pulley","Tricipiti",2,"8","30","",60),
+  ex("e13","Pushdown barra vieta + Tricipiti pulley","Tricipiti",4,"8+10","20+30","",90,"Superserie: fai le 8 del pushdown ai cavi e passa subito alle 10 del pulley, senza pausa. Il recupero parte dopo il pulley.","Superserie"),
   ex("e15","Tricipiti macchina","Tricipiti",2,"10","30","",60,"Carico di partenza, aggiusta tu.","Ultima serie: 10+8+8 stripping"),
   ex("ea2","Allenamento addome","Addome",1,"9 min","","",0,"3 video da 3 minuti, uno dopo l'altro.")]},
  {id:"d3",name:"Giorno 3",sub:"Petto · Bicipiti",groups:[{name:"Addome",color:G.addome},{name:"Petto",color:G.petto},{name:"Bicipiti",color:G.bicipiti}],exercises:[
@@ -236,6 +235,17 @@ function migrate(plan){
     if(d2&&d2.exercises){d2.exercises.forEach(function(e){
       if(e.id==="e12"&&e.sets===2&&e.reps==="8"){e.sets=3;e.reps="8+8";if(/rest pause/i.test(e.tag||""))e.tag="";}
     });}
+    if(d2&&d2.exercises){
+      var x13=d2.exercises.filter(function(e){return e.id==="e13";})[0];
+      var i14=-1;d2.exercises.forEach(function(e,i){if(e.id==="e14")i14=i;});
+      if(x13&&i14>=0&&x13.sets===2&&x13.reps==="10"){
+        var x14=d2.exercises[i14];
+        x13.name="Pushdown barra vieta + Tricipiti pulley";x13.sets=4;x13.reps="8+10";
+        x13.load=(x13.load||"20")+"+"+(x14.load||"30");x13.rest=90;x13.tag="Superserie";
+        x13.note="Superserie: fai le 8 del pushdown ai cavi e passa subito alle 10 del pulley, senza pausa. Il recupero parte dopo il pulley.";
+        d2.exercises.splice(i14,1);
+      }
+    }
     var d1=plan&&plan[0];
     if(d1&&d1.id==="d1"&&d1.groups){
       var ord=["Cardio","Polpacci","Spalle","Gambe"];
@@ -387,8 +397,7 @@ var TIPS={
  e10:"Petto alto e tira la maniglia verso la parte alta del petto con i gomiti verso il basso. Non usare il busto per dare slancio. Fermati 1 secondo a fine trazione e risali lento.",
  e11:"Busto inclinato e fermo, tira verso l'addome alto, stringi le scapole in fondo e scendi lentamente fino ad allungare bene i dorsali. Se il busto si alza ad ogni ripetizione il carico è troppo.",
  e12:"Busto fermo, gomiti vicini ai fianchi, stringi 1 secondo a fine trazione. Ogni serie e 8+8: fai le prime 8, respira 10-15 secondi e aggiungi altre 8 senza cambiare il carico.",
- e13:"Gomiti incollati ai fianchi, estendi completamente e stringi 1 secondo in basso. Il carico sale solo se i gomiti restano fermi per tutta la serie.",
- e14:"Gomiti fermi, estensione completa e ritorno lento controllando il cavo. Il tricipite risponde bene alla tensione costante: non lasciar cadere il peso.",
+ e13:"Superserie: pushdown e pulley uno dopo l'altro senza pausa, poi recupero. Gomiti incollati ai fianchi in entrambi, estensione completa e 1 secondo di contrazione. Il tricipite e gia affaticato dal primo esercizio: parti con il carico del pulley piu leggero di quello che usavi da solo e alza solo se le ripetizioni restano pulite.",
  e15:"Schiena appoggiata e spalle basse. Estendi completamente senza sollevare le spalle. Nell'ultima serie stripping: scendi di carico subito, senza riposo, e continua fino alle ripetizioni indicate.",
  e16:"Scapole addotte e abbassate, piedi a terra, bilanciere sul petto basso con i gomiti a circa 45-70°. Spingi verso l'alto e leggermente indietro. Con 4×5 a carico alto usa sempre i fermi di sicurezza o un compagno.",
  e17:"Panca a circa 30°. Scendi con controllo finché senti il petto allungarsi, poi spingi senza far toccare i manubri in alto. Questo esercizio costruisce la parte alta del petto: non far salire le spalle verso le orecchie.",
@@ -561,7 +570,7 @@ function viewOggi(){
     });
     h+='</div>';
   });
-  h+='<div style="text-align:center;margin-top:26px"><button class="link" data-act="testsound">Prova il suono di fine recupero</button><br><button class="link" data-act="testtimer">Prova un timer da 5 secondi</button><div style="font-size:11px;color:var(--fg3);margin-top:8px">Versione 45</div></div>';
+  h+='<div style="text-align:center;margin-top:26px"><button class="link" data-act="testsound">Prova il suono di fine recupero</button><br><button class="link" data-act="testtimer">Prova un timer da 5 secondi</button><div style="font-size:11px;color:var(--fg3);margin-top:8px">Versione 46</div></div>';
   return h;
 }
 
