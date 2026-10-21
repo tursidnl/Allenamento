@@ -201,7 +201,7 @@ var DEFAULT_PLAN=[
   ex("e8","Calf machine","Polpacci",4,"10","55","",60,"Pausa in basso, muscolo allungato.")]},
  {id:"d2",name:"Giorno 2",sub:"Dorsali · Tricipiti",groups:[{name:"Addome",color:G.addome},{name:"Dorsali",color:G.dorsali},{name:"Tricipiti",color:G.tricipiti}],exercises:[
   ex("e9","Trazioni alla sbarra","Dorsali",3,"6","corpo libero","",120,"Se ne fai 8 pulite, aggiungi zavorra."),
-  ex("e10","Lat machine","Dorsali",2,"10","30","",90,"Maniglia."),
+  ex("e10","Lat machine","Dorsali",3,"10","30","",90,"Maniglia."),
   ex("e11","T-bar","Dorsali",3,"8","35","",120),
   ex("e12","Rematore al petto","Dorsali",3,"8+8","50","",120,""),
   ex("e13","Pushdown barra vieta + Tricipiti pulley","Tricipiti",4,"8+10","20+30","",90,"Superserie: fai le 8 del pushdown ai cavi e passa subito alle 10 del pulley, senza pausa. Il recupero parte dopo il pulley.","Superserie"),
@@ -246,6 +246,7 @@ function migrate(plan){
         d2.exercises.splice(i14,1);
       }
     }
+    if(d2&&d2.exercises){d2.exercises.forEach(function(e){if(e.id==="e10"&&e.sets===2&&e.reps==="10")e.sets=3;});}
     var d1=plan&&plan[0];
     if(d1&&d1.id==="d1"&&d1.groups){
       var ord=["Cardio","Polpacci","Spalle","Gambe"];
@@ -570,7 +571,7 @@ function viewOggi(){
     });
     h+='</div>';
   });
-  h+='<div style="text-align:center;margin-top:26px"><button class="link" data-act="testsound">Prova il suono di fine recupero</button><br><button class="link" data-act="testtimer">Prova un timer da 5 secondi</button><div style="font-size:11px;color:var(--fg3);margin-top:8px">Versione 46</div></div>';
+  h+='<div style="text-align:center;margin-top:26px"><button class="link" data-act="testsound">Prova il suono di fine recupero</button><br><button class="link" data-act="testtimer">Prova un timer da 5 secondi</button><div style="font-size:11px;color:var(--fg3);margin-top:8px">Versione 47</div></div>';
   return h;
 }
 
