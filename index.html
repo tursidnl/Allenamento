@@ -203,7 +203,7 @@ var DEFAULT_PLAN=[
   ex("e9","Trazioni alla sbarra","Dorsali",3,"6","corpo libero","",120,"Se ne fai 8 pulite, aggiungi zavorra."),
   ex("e10","Lat machine","Dorsali",2,"10","30","",90,"Maniglia."),
   ex("e11","T-bar","Dorsali",3,"8","35","",120),
-  ex("e12","Rematore al petto","Dorsali",2,"8","50","",120,"","Ultima serie: 8 + 5 rest pause"),
+  ex("e12","Rematore al petto","Dorsali",3,"8+8","50","",120,""),
   ex("e13","Pushdown barra corta ai cavi","Tricipiti",2,"10","20","",60,"Gomiti fermi."),
   ex("e14","Tricipiti pulley","Tricipiti",2,"8","30","",60),
   ex("e15","Tricipiti macchina","Tricipiti",2,"10","30","",60,"Carico di partenza, aggiusta tu.","Ultima serie: 10+8+8 stripping"),
@@ -232,6 +232,10 @@ function migrate(plan){
       d.groups.unshift({name:"Cardio",color:G.cardio});
       d.exercises.unshift(clone(DEFAULT_PLAN[0].exercises[0]));
     }
+    var d2=plan&&plan[1];
+    if(d2&&d2.exercises){d2.exercises.forEach(function(e){
+      if(e.id==="e12"&&e.sets===2&&e.reps==="8"){e.sets=3;e.reps="8+8";if(/rest pause/i.test(e.tag||""))e.tag="";}
+    });}
     var d1=plan&&plan[0];
     if(d1&&d1.id==="d1"&&d1.groups){
       var ord=["Cardio","Polpacci","Spalle","Gambe"];
@@ -382,7 +386,7 @@ var TIPS={
  e9:"Parti appeso con le scapole giù, porta il mento sopra la sbarra tirando i gomiti verso i fianchi e scendi in controllo fino a braccia tese. Niente dondolio. Quando chiudi tutte le serie pulite, aggiungi zavorra.",
  e10:"Petto alto e tira la maniglia verso la parte alta del petto con i gomiti verso il basso. Non usare il busto per dare slancio. Fermati 1 secondo a fine trazione e risali lento.",
  e11:"Busto inclinato e fermo, tira verso l'addome alto, stringi le scapole in fondo e scendi lentamente fino ad allungare bene i dorsali. Se il busto si alza ad ogni ripetizione il carico è troppo.",
- e12:"Busto fermo, gomiti vicini ai fianchi, stringi 1 secondo a fine trazione. Nella rest pause finale: fai le 8, respira 10-15 secondi e aggiungi le altre 5.",
+ e12:"Busto fermo, gomiti vicini ai fianchi, stringi 1 secondo a fine trazione. Ogni serie e 8+8: fai le prime 8, respira 10-15 secondi e aggiungi altre 8 senza cambiare il carico.",
  e13:"Gomiti incollati ai fianchi, estendi completamente e stringi 1 secondo in basso. Il carico sale solo se i gomiti restano fermi per tutta la serie.",
  e14:"Gomiti fermi, estensione completa e ritorno lento controllando il cavo. Il tricipite risponde bene alla tensione costante: non lasciar cadere il peso.",
  e15:"Schiena appoggiata e spalle basse. Estendi completamente senza sollevare le spalle. Nell'ultima serie stripping: scendi di carico subito, senza riposo, e continua fino alle ripetizioni indicate.",
@@ -557,7 +561,7 @@ function viewOggi(){
     });
     h+='</div>';
   });
-  h+='<div style="text-align:center;margin-top:26px"><button class="link" data-act="testsound">Prova il suono di fine recupero</button><br><button class="link" data-act="testtimer">Prova un timer da 5 secondi</button><div style="font-size:11px;color:var(--fg3);margin-top:8px">Versione 44</div></div>';
+  h+='<div style="text-align:center;margin-top:26px"><button class="link" data-act="testsound">Prova il suono di fine recupero</button><br><button class="link" data-act="testtimer">Prova un timer da 5 secondi</button><div style="font-size:11px;color:var(--fg3);margin-top:8px">Versione 45</div></div>';
   return h;
 }
 
