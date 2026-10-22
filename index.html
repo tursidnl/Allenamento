@@ -214,8 +214,7 @@ var DEFAULT_PLAN=[
   ex("e16","Distensioni panca piana","Petto",4,"5","70","kg",150,"Circa l'80% del tuo massimale (87)."),
   ex("e17","Spinte manubri panca inclinata","Petto",3,"8","24","kg /mano",120,"Il tuo carico da 4×8 pulite."),
   ex("e18","Pect machine","Petto",3,"10","50","",60),
-  ex("e19","Curl manubri","Bicipiti",2,"10+10","8","",60),
-  ex("e20","Curl hammer","Bicipiti",2,"10+10","8","",60),
+  ex("e19","Curl manubri + Curl hammer","Bicipiti",3,"8+8","10+10","",90,"Superserie: fai le 8 del curl manubri e passa subito alle 8 del curl hammer, senza pausa. Il recupero parte dopo l'hammer.","Superserie"),
   ex("e21","Curl Larry Scott","Bicipiti",3,"8","25→15","",60,"Alla macchina.","Ultima serie: 8 + 6 drop set"),
   ex("ea3","Allenamento addome","Addome",1,"9 min","","",0,"3 video da 3 minuti, uno dopo l'altro.")]}
 ];
@@ -250,6 +249,16 @@ function migrate(plan){
       }
     }
     if(d2&&d2.exercises){d2.exercises.forEach(function(e){if(e.id==="e10"&&e.sets===2&&e.reps==="10")e.sets=3;});}
+    var d3=plan&&plan[2];
+    if(d3&&d3.exercises){
+      var x19=d3.exercises.filter(function(e){return e.id==="e19";})[0],i20=-1;
+      d3.exercises.forEach(function(e,i){if(e.id==="e20")i20=i;});
+      if(x19&&i20>=0&&x19.sets===2&&x19.reps==="10+10"){
+        x19.name="Curl manubri + Curl hammer";x19.sets=3;x19.reps="8+8";x19.load="10+10";x19.rest=90;x19.tag="Superserie";
+        x19.note="Superserie: fai le 8 del curl manubri e passa subito alle 8 del curl hammer, senza pausa. Il recupero parte dopo l'hammer.";
+        d3.exercises.splice(i20,1);
+      }
+    }
     var d1=plan&&plan[0];
     if(d1&&d1.id==="d1"&&d1.groups){
       var ord=["Cardio","Polpacci","Spalle","Gambe"];
@@ -406,8 +415,7 @@ var TIPS={
  e16:"Scapole addotte e abbassate, piedi a terra, bilanciere sul petto basso con i gomiti a circa 45-70°. Spingi verso l'alto e leggermente indietro. Con 4×5 a carico alto usa sempre i fermi di sicurezza o un compagno.",
  e17:"Panca a circa 30°. Scendi con controllo finché senti il petto allungarsi, poi spingi senza far toccare i manubri in alto. Questo esercizio costruisce la parte alta del petto: non far salire le spalle verso le orecchie.",
  e18:"Spalle indietro e giù, stringi 1 secondo al centro e torna lentamente senza far appoggiare lo stack. Qui puoi avvicinarti al cedimento in sicurezza nell'ultima serie.",
- e19:"Gomiti fermi, ruota il polso verso l'alto mentre sali e scendi in 2-3 secondi. Niente dondolio del busto.",
- e20:"Presa neutra e gomiti vicini al corpo. Lavori brachiale e brachioradiale, che danno spessore al braccio. Stesso controllo del curl: scendi lento.",
+ e19:"Superserie: curl manubri e hammer uno dopo l'altro senza pausa, poi recupero. Gomiti fermi, nel curl ruota il polso verso l'alto, nell'hammer presa neutra e gomiti vicini al corpo. Scendi sempre in 2-3 secondi, niente dondolio del busto. Alza i carichi solo se tutte le 8+8 restano pulite.",
  e21:"Braccia ben appoggiate, scendi fin quasi all'estensione completa senza rilassare il bicipite. Nel drop set scala il carico subito, senza riposo, e completa le ripetizioni."
 };
 var GTIPS={Gambe:"Controlla la discesa e lavora in tutto il range di movimento: le gambe crescono con tensione e profondità.",Spalle:"Tecnica pulita e carico progressivo: le spalle si rovinano con lo slancio.",Polpacci:"Pausa in allungamento e ritorno lento.",Dorsali:"Pensa a tirare con i gomiti, non con le mani, e stringi le scapole a fine movimento.",Tricipiti:"Gomiti fermi e estensione completa.",Petto:"Scapole fisse e controllo in discesa.",Bicipiti:"Gomiti fermi e discesa lenta."};
@@ -574,7 +582,7 @@ function viewOggi(){
     });
     h+='</div>';
   });
-  h+='<div style="text-align:center;margin-top:26px"><button class="link" data-act="testsound">Prova il suono di fine recupero</button><br><button class="link" data-act="testtimer">Prova un timer da 5 secondi</button><div style="font-size:11px;color:var(--fg3);margin-top:8px">Versione 50</div></div>';
+  h+='<div style="text-align:center;margin-top:26px"><button class="link" data-act="testsound">Prova il suono di fine recupero</button><br><button class="link" data-act="testtimer">Prova un timer da 5 secondi</button><div style="font-size:11px;color:var(--fg3);margin-top:8px">Versione 51</div></div>';
   return h;
 }
 
